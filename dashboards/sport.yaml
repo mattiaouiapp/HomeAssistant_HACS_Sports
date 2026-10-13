@@ -1604,6 +1604,9 @@ views:
       - user: 2f9103779fcc413ba915b1b1d7498317
     sections:
       - type: grid
+        background:
+          color: '#1c1c2e'
+          opacity: 100
         cards:
           - type: heading
             heading: Overview
@@ -1710,6 +1713,9 @@ views:
             grid_options:
               columns: 6
       - type: grid
+        background:
+          color: '#1c1c2e'
+          opacity: 100
         cards:
           - type: heading
             heading: Today
@@ -1792,6 +1798,9 @@ views:
 
               {% endif %}
       - type: grid
+        background:
+          color: '#1c1c2e'
+          opacity: 100
         cards:
           - type: heading
             heading: Stages
@@ -1856,6 +1865,9 @@ views:
 
               {% endif %}
       - type: grid
+        background:
+          color: '#1c1c2e'
+          opacity: 100
         cards:
           - type: heading
             heading: Last stage
@@ -1955,6 +1967,9 @@ views:
 
               {% endif %}
       - type: grid
+        background:
+          color: '#1c1c2e'
+          opacity: 100
         column_span: 3
         cards:
           - type: heading
