@@ -10,6 +10,8 @@ Un'unica integrazione HACS per le competizioni che seguo, con i dati di [TheSpor
 
 Ogni competizione è una voce separata dell'integrazione, con il suo dispositivo e le sue opzioni. Gli ID delle entità sono fissi e non dipendono dalla lingua di Home Assistant, quindi le dashboard funzionano ovunque. I nomi sono tradotti in italiano e inglese.
 
+Nel repository c'è anche la mia dashboard completa, [`dashboards/sport.yaml`](dashboards/sport.yaml): oltre alle tre competizioni contiene F1 e calcio (Serie A e Champions League), che arrivano da altre integrazioni. Vedi [Dashboard completa](#dashboard-completa).
+
 ## Installazione
 
 ### HACS
@@ -25,7 +27,16 @@ Copia `custom_components/mmoui_sports` in `<config>/custom_components/` e riavvi
 
 ### Passaggio dalle vecchie integrazioni
 
-Questa integrazione sostituisce `fia_wec`, `dakar_rally` e `volley_serie_a`. Rimuovi le vecchie voci e i vecchi repository da HACS prima di aggiungerla: gli ID delle entità sono gli stessi, quindi due integrazioni attive insieme andrebbero in conflitto (Home Assistant aggiungerebbe `_2` agli ID).
+Questa integrazione sostituisce `fia_wec`, `dakar_rally` e `volley_serie_a`, che usavano gli stessi ID delle entità. Prima di aggiungerla:
+
+1. **Impostazioni → Dispositivi e servizi**: elimina le vecchie voci FIA WEC, Dakar Rally e Volley Serie A.
+2. Togli i vecchi repository da HACS. Se un'integrazione era stata copiata a mano, cancella anche la sua cartella in `<config>/custom_components/` (per esempio `fia_wec`).
+3. Riavvia Home Assistant.
+
+Se gli ID nuovi finiscono con `_2` (per esempio `sensor.fia_wec_next_race_2`) e la dashboard mostra "Entity not found", le vecchie entità sono rimaste registrate:
+
+1. **Impostazioni → Entità**, cerca il prefisso (`fia_wec`, `dakar_rally` o `volley_superlega`), seleziona quelle non disponibili o "non più fornite" e **Rimuovi**.
+2. Su MMOUi Sports elimina la competizione interessata e riaggiungila con **Add service**: ora prende gli ID giusti.
 
 ## Opzioni
 
@@ -95,6 +106,30 @@ Da **Configura** su ogni voce:
 | [`sport.yaml`](dashboards/sport.yaml) | La mia dashboard completa: F1, WEC, Dakar, Serie A con Champions League, SuperLega | Anche [Calcio Live](https://github.com/Bobsilvio/calcio-live) con le sue card (Serie A, Champions League e il Milan), un'integrazione F1 con entità `sensor.f1_*` e [button-card](https://github.com/custom-cards/button-card) |
 
 Per aggiungerne una: **Impostazioni → Plance → Aggiungi plancia → Nuova plancia da zero**, aprila, menu ⋮ → **Modifica plancia** → menu ⋮ → **Editor di configurazione grezza**, e sostituisci il contenuto con il file.
+
+### Dashboard completa
+
+[`sport.yaml`](dashboards/sport.yaml) ha cinque viste:
+
+| Vista | Dati da | Entità principali |
+| --- | --- | --- |
+| F1 | Integrazione F1 con [button-card](https://github.com/custom-cards/button-card) | `sensor.f1_*` |
+| WEC | MMOUi Sports | `*.fia_wec_*` |
+| Dakar Rally | MMOUi Sports | `*.dakar_rally_*` |
+| Calcio | [Calcio Live](https://github.com/Bobsilvio/calcio-live) e [Calcio Live Card](https://github.com/Bobsilvio/calcio-live-card) | vedi sotto |
+| SuperLega | MMOUi Sports | `*.volley_superlega_*` |
+
+La vista calcio mostra il Milan, la classifica di Serie A e la Champions League (partite, classifica della fase campionato, tabellone a eliminazione diretta). In Calcio Live servono tre voci:
+
+| Voce Calcio Live | Tipo | Entità usate |
+| --- | --- | --- |
+| Serie A, squadra AC Milan | Squadra | `sensor.calciolive_next_ita_1_ac_milan` |
+| Italian Serie A | Campionato | `sensor.calciolive_classifica_italian_serie_a` |
+| UEFA Champions League | Campionato | `sensor.calciolive_all_uefa_champions_league`, `sensor.calciolive_classifica_uefa_champions_league`, `sensor.calciolive_bracket_uefa_champions_league` |
+
+La Champions va da TheSportsDB a Calcio Live perché, con la chiave gratuita, TheSportsDB non ha la classifica e restituisce solo 5 partite su 18 per giornata, mentre Calcio Live (dati ESPN) ha risultati in diretta, classifica e tabellone.
+
+Le viste hanno un'intestazione e sono visibili solo al mio utente (`visible: user`): se usi il file su un altro Home Assistant, togli o cambia quelle righe.
 
 ## Chiave API
 
