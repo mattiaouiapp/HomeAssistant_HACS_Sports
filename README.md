@@ -89,7 +89,12 @@ Da **Configura** su ogni voce:
 
 ## Dashboard
 
-I file in [`dashboards/`](dashboards/) usano solo card native. Per aggiungerne una: **Impostazioni → Plance → Aggiungi plancia → Nuova plancia da zero**, aprila, menu ⋮ → **Modifica plancia** → menu ⋮ → **Editor di configurazione grezza**, e sostituisci il contenuto con il file.
+| File | Contenuto | Richiede |
+| --- | --- | --- |
+| [`fia_wec.yaml`](dashboards/fia_wec.yaml), [`dakar_rally.yaml`](dashboards/dakar_rally.yaml), [`superlega.yaml`](dashboards/superlega.yaml) | Una competizione per dashboard | Solo questa integrazione, card native |
+| [`sport.yaml`](dashboards/sport.yaml) | La mia dashboard completa: F1, WEC, Dakar, Serie A con Champions League, SuperLega | Anche [Calcio Live](https://github.com/Bobsilvio/calcio-live) con le sue card (Serie A, Champions League e il Milan), un'integrazione F1 con entità `sensor.f1_*` e [button-card](https://github.com/custom-cards/button-card) |
+
+Per aggiungerne una: **Impostazioni → Plance → Aggiungi plancia → Nuova plancia da zero**, aprila, menu ⋮ → **Modifica plancia** → menu ⋮ → **Editor di configurazione grezza**, e sostituisci il contenuto con il file.
 
 ## Chiave API
 

@@ -1,0 +1,2148 @@
+# Personal "Sport" dashboard for Home Assistant (sections views).
+#
+# Views: F1 (sensor.f1_* entities, button-card), FIA WEC, Dakar Rally, Serie A + Champions
+# League (calcio-live), SuperLega volleyball. WEC, Dakar and SuperLega use the
+# MMOUi Sports integration (this repository);
+# football uses the Calcio Live integration and cards (Bobsilvio/calcio-live).
+#
+# To load it: open the dashboard, menu -> Edit dashboard -> menu -> Raw
+# configuration editor, and replace everything with this file.
+
+views:
+  - type: sections
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Calendario Gare
+            heading_style: title
+          - type: custom:button-card
+            entity: sensor.f1_current_season
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"title" "list"'
+                - grid-template-columns: 1fr
+              custom_fields:
+                title:
+                  - font-size: 24px
+                  - font-weight: 800
+                  - letter-spacing: 1px
+                  - text-transform: uppercase
+                  - padding: 4px 0 10px
+                  - border-bottom: 1px solid rgba(255,255,255,0.25)
+                  - margin-bottom: 10px
+            custom_fields:
+              title: 📅 Race Calendar
+              list: |
+                [[[
+                  const PREV = 1;   // gare già corse da mostrare
+                  const NEXT = 4;   // prossime gare da mostrare
+
+                  const a = entity?.attributes || {};
+                  const races = a.races || a.race_schedule || a.calendar || a.Races || a.data || [];
+                  if (!races.length) return '<div style="opacity:.7">Nessun dato disponibile</div>';
+
+                  const iso = {
+                    'Australia':'au','China':'cn','Japan':'jp','Bahrain':'bh','Saudi Arabia':'sa',
+                    'USA':'us','United States':'us','Italy':'it','Monaco':'mc','Spain':'es',
+                    'Canada':'ca','Austria':'at','UK':'gb','United Kingdom':'gb','Great Britain':'gb',
+                    'Belgium':'be','Hungary':'hu','Netherlands':'nl','Azerbaijan':'az',
+                    'Singapore':'sg','Mexico':'mx','Brazil':'br','Qatar':'qa','UAE':'ae',
+                    'United Arab Emirates':'ae','Abu Dhabi':'ae','Portugal':'pt','France':'fr',
+                    'Germany':'de','Turkey':'tr','Russia':'ru','Vietnam':'vn','South Africa':'za'
+                  };
+
+                  const when = r => new Date(`${r.date}T${r.time || '12:00:00Z'}`);
+                  const now = new Date();
+                  let idx = races.findIndex(r => when(r).getTime() + 3 * 3600e3 > now.getTime());
+                  if (idx < 0) idx = races.length;
+                  const from = Math.max(0, idx - PREV);
+                  const shown = races.slice(from, idx + NEXT);
+
+                  const mesi = ['gen','feb','mar','apr','mag','giu','lug','ago','set','ott','nov','dic'];
+
+                  return shown.map((r, i) => {
+                    const d = when(r);
+                    const past = from + i < idx;
+                    const isNext = from + i === idx;
+                    const loc = r.Circuit?.Location || {};
+                    const cc = iso[loc.country] || '';
+                    const flag = cc
+                      ? `<img src="https://flagcdn.com/w80/${cc}.png" style="width:30px;height:20px;object-fit:cover;border-radius:3px;box-shadow:0 0 0 1px rgba(255,255,255,.25)">`
+                      : '';
+                    const ora = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Rome' });
+                    const giorno = d.toLocaleDateString('it-IT', { day: '2-digit', timeZone: 'Europe/Rome' });
+                    const mese = mesi[Number(d.toLocaleDateString('en-US', { month: 'numeric', timeZone: 'Europe/Rome' })) - 1];
+                    const sub = [loc.locality, r.Sprint ? 'sprint' : '', isNext ? 'prossima gara' : '']
+                      .filter(Boolean).join(' · ');
+
+                    return `
+                      <div style="display:grid;grid-template-columns:48px 34px 1fr auto;align-items:center;
+                                  gap:10px;margin-bottom:6px;padding:6px 10px;border-radius:10px;
+                                  ${past ? 'opacity:.5;' : ''}
+                                  background:${isNext ? 'linear-gradient(90deg,#e1060066,#e1060010 70%,transparent)' : 'rgba(255,255,255,.04)'}">
+                        <div style="text-align:center;border-radius:8px;padding:4px 0;background:rgba(255,255,255,.08)">
+                          <div style="font-size:20px;font-weight:700;line-height:1.1">${giorno}</div>
+                          <div style="font-size:11px;opacity:.75">${mese}</div>
+                        </div>
+                        <div>${flag}</div>
+                        <div style="text-align:left;line-height:1.2;overflow:hidden">
+                          <div style="font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;
+                                      text-overflow:ellipsis">${(r.raceName || '').replace('Grand Prix', 'GP')}</div>
+                          <div style="font-size:12px;opacity:.75">${sub}</div>
+                        </div>
+                        <div style="font-size:15px;font-weight:700;white-space:nowrap">
+                          ${past ? '🏁' : ora}
+                        </div>
+                      </div>`;
+                  }).join('');
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: Classifica Piloti
+          - type: custom:button-card
+            entity: sensor.f1_driver_standings
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"title" "list"'
+                - grid-template-columns: 1fr
+              custom_fields:
+                title:
+                  - font-size: 24px
+                  - font-weight: 800
+                  - letter-spacing: 1px
+                  - text-transform: uppercase
+                  - padding: 4px 0 10px
+                  - border-bottom: 1px solid rgba(255,255,255,0.25)
+                  - margin-bottom: 10px
+                list:
+                  - padding-right: 0px
+            custom_fields:
+              title: 🏁 Drivers Standings
+              list: |
+                [[[
+                  const a = entity?.attributes || {};
+                  const list = a.driver_standings || a.standings || a.DriverStandings || [];
+                  if (!list.length) return '<div style="opacity:.7">Nessun dato disponibile</div>';
+
+                  // Colori team (constructorId Jolpica)
+                  const colors = {
+                    mclaren: '#ff8000', red_bull: '#3671c6', mercedes: '#27f4d2',
+                    ferrari: '#e8002d', williams: '#1868db', sauber: '#52e252',
+                    audi: '#ff2d00', rb: '#6692ff', haas: '#b6babd',
+                    aston_martin: '#229971', alpine: '#ff87bc', cadillac: '#c9c9c9'
+                  };
+
+                  // Foto piloti, colore e numero da sensor.f1_driver_list
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byTla = {};
+                  roster.forEach(r => { if (r.tla) byTla[r.tla.toUpperCase()] = r; });
+
+                  // Loghi ufficiali F1 per constructorId (fallback: badge locale)
+                  const B = 'https://media.formula1.com/image/upload/c_fit,h_64/q_auto/v1740000000/common/f1/2025/';
+                  const logos = {
+                    red_bull:     B + 'redbullracing/2025redbullracinglogo.webp',
+                    ferrari:      B + 'ferrari/2025ferrarilogo.webp',
+                    mercedes:     B + 'mercedes/2025mercedeslogowhite.webp',
+                    mclaren:      B + 'mclaren/2025mclarenlogo.webp',
+                    aston_martin: B + 'astonmartin/2025astonmartinlogowhite.webp',
+                    alpine:       B + 'alpine/2025alpinelogo.webp',
+                    rb:           B + 'racingbulls/2025racingbullslogowhite.webp',
+                    haas:         B + 'haas/2025haaslogo.webp',
+                    williams:     B + 'williams/2025williamslogo.webp',
+                    sauber:       B + 'kicksauber/2025kicksauberlogo.webp'
+                  };
+
+                  // Monoposto ufficiali F1 per constructorId (se manca, lo spazio resta vuoto)
+                  const C = 'https://media.formula1.com/image/upload/c_lfill,w_240/q_auto/v1740000000/common/f1/2025/';
+                  const cars = {
+                    mclaren:      C + 'mclaren/2025mclarencarright.webp',
+                    mercedes:     C + 'mercedes/2025mercedescarright.webp',
+                    red_bull:     C + 'redbullracing/2025redbullracingcarright.webp',
+                    ferrari:      C + 'ferrari/2025ferraricarright.webp',
+                    williams:     C + 'williams/2025williamscarright.webp',
+                    rb:           C + 'racingbulls/2025racingbullscarright.webp',
+                    aston_martin: C + 'astonmartin/2025astonmartincarright.webp',
+                    haas:         C + 'haas/2025haascarright.webp',
+                    sauber:       C + 'kicksauber/2025kicksaubercarright.webp',
+                    alpine:       C + 'alpine/2025alpinecarright.webp'
+                  };
+                  const CAR_W = window.innerWidth <= 500 ? 64 : 96;
+
+                  const img = (src, fallback, w, round) =>
+                    `<img src="${src || fallback}" style="width:${w}px;height:${w}px;
+                          object-fit:${round ? 'cover' : 'contain'};${round ? 'border-radius:50%;' : ''}"
+                          onerror="if(this.src.indexOf('${fallback}')<0){this.src='${fallback}'}else{this.style.visibility='hidden'}">`;
+
+                  return list.slice(0, 6).map(d => {
+                    const drv  = d.Driver || d.driver || {};
+                    const team = (d.Constructors || d.constructors || [])[0] || {};
+                    const code = (drv.code || '').toUpperCase();
+                    const name = `${drv.givenName || ''} ${drv.familyName || ''}`.trim();
+                    const tid  = team.constructorId || '';
+                    const live = byTla[code] || {};
+                    const tc   = live.team_color ? '#' + String(live.team_color).replace('#','') : null;
+                    const c    = tc || colors[tid] || '#888888';
+                    const num  = live.racing_number || '';
+
+                    return `
+                      <div style="display:grid;grid-template-columns:40px 40px 44px minmax(0,1fr) ${CAR_W}px auto;
+                                  align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;
+                                  border-radius:10px;
+                                  background:linear-gradient(90deg, ${c}40, ${c}10 60%, transparent)">
+                        <div style="font-size:30px;font-weight:700;color:${c};text-align:center">${d.position}</div>
+                        <div style="position:relative;width:40px;height:40px">
+                          ${img(live.headshot_small, `/local/f1/drivers/${code.toLowerCase()}.png`, 40, true)}
+                          ${num ? `<div style="position:absolute;bottom:-4px;right:-4px;font-size:13px;font-weight:900;
+                               color:${c};text-shadow:-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,1px 1px 0 #000">${num}</div>` : ''}
+                        </div>
+                        ${img(logos[tid], `/local/f1/teams/${tid}.png`, 44, false)}
+                        <div style="text-align:left;line-height:1.2;overflow:hidden">
+                          <div style="font-size:15px;font-weight:600;white-space:nowrap;
+                                      overflow:hidden;text-overflow:ellipsis">${code} - ${name}</div>
+                          <div style="font-size:12px;opacity:.75">${team.name || ''}</div>
+                        </div>
+                        <div>${cars[tid] ? `<img src="${cars[tid]}" style="width:${CAR_W}px;height:auto;display:block"
+                               onerror="this.style.visibility='hidden'">` : ''}</div>
+                        <div style="font-size:22px;font-weight:700;white-space:nowrap">
+                          ${d.points} <span style="font-size:11px;font-weight:600">PTS</span>
+                        </div>
+                      </div>`;
+                  }).join('');
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: Classifica Scuderie
+          - type: custom:button-card
+            entity: sensor.f1_constructor_standings
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"title" "list"'
+                - grid-template-columns: 1fr
+              custom_fields:
+                title:
+                  - font-size: 24px
+                  - font-weight: 800
+                  - letter-spacing: 1px
+                  - text-transform: uppercase
+                  - padding: 4px 0 10px
+                  - border-bottom: 1px solid rgba(255,255,255,0.25)
+                  - margin-bottom: 10px
+            custom_fields:
+              title: 🏆 Constructors Standings
+              list: |
+                [[[
+                  const TOP = 6;   // quante scuderie mostrare
+
+                  const a = entity?.attributes || {};
+                  const list = a.constructor_standings || a.standings || a.ConstructorStandings || [];
+                  if (!list.length) return '<div style="opacity:.7">Nessun dato disponibile</div>';
+
+                  const colors = {
+                    mclaren: '#ff8000', red_bull: '#3671c6', mercedes: '#27f4d2',
+                    ferrari: '#e8002d', williams: '#1868db', sauber: '#52e252',
+                    audi: '#ff2d00', rb: '#6692ff', haas: '#b6babd',
+                    aston_martin: '#229971', alpine: '#ff87bc', cadillac: '#c9c9c9'
+                  };
+
+                  // Piloti per team (dalla classifica piloti) + colore ufficiale dal roster live
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byTla = {};
+                  roster.forEach(r => { if (r.tla) byTla[r.tla.toUpperCase()] = r; });
+                  const ds = states['sensor.f1_driver_standings']?.attributes?.driver_standings || [];
+                  const teamDrivers = {}, teamColor = {};
+                  ds.forEach(d => {
+                    const tid = d.Constructors?.[0]?.constructorId;
+                    const code = (d.Driver?.code || '').toUpperCase();
+                    if (!tid || !code) return;
+                    (teamDrivers[tid] = teamDrivers[tid] || []).push(code);
+                    const tc = byTla[code]?.team_color;
+                    if (tc && !teamColor[tid]) teamColor[tid] = '#' + String(tc).replace('#', '');
+                  });
+
+                  const L = 'https://media.formula1.com/image/upload/c_fit,h_64/q_auto/v1740000000/common/f1/2025/';
+                  const logos = {
+                    red_bull:     L + 'redbullracing/2025redbullracinglogo.webp',
+                    ferrari:      L + 'ferrari/2025ferrarilogo.webp',
+                    mercedes:     L + 'mercedes/2025mercedeslogowhite.webp',
+                    mclaren:      L + 'mclaren/2025mclarenlogo.webp',
+                    aston_martin: L + 'astonmartin/2025astonmartinlogowhite.webp',
+                    alpine:       L + 'alpine/2025alpinelogo.webp',
+                    rb:           L + 'racingbulls/2025racingbullslogowhite.webp',
+                    haas:         L + 'haas/2025haaslogo.webp',
+                    williams:     L + 'williams/2025williamslogo.webp',
+                    sauber:       L + 'kicksauber/2025kicksauberlogo.webp'
+                  };
+
+                  const C = 'https://media.formula1.com/image/upload/c_lfill,w_240/q_auto/v1740000000/common/f1/2025/';
+                  const cars = {
+                    mclaren:      C + 'mclaren/2025mclarencarright.webp',
+                    mercedes:     C + 'mercedes/2025mercedescarright.webp',
+                    red_bull:     C + 'redbullracing/2025redbullracingcarright.webp',
+                    ferrari:      C + 'ferrari/2025ferraricarright.webp',
+                    williams:     C + 'williams/2025williamscarright.webp',
+                    rb:           C + 'racingbulls/2025racingbullscarright.webp',
+                    aston_martin: C + 'astonmartin/2025astonmartincarright.webp',
+                    haas:         C + 'haas/2025haascarright.webp',
+                    sauber:       C + 'kicksauber/2025kicksaubercarright.webp',
+                    alpine:       C + 'alpine/2025alpinecarright.webp'
+                  };
+                  const CAR_W = window.innerWidth <= 500 ? 64 : 96;
+
+                  const logo = (tid) => {
+                    const fb = `/local/f1/teams/${tid}.png`;
+                    return `<img src="${logos[tid] || fb}" style="width:44px;height:44px;object-fit:contain"
+                              onerror="if(this.src.indexOf('${fb}')<0){this.src='${fb}'}else{this.style.visibility='hidden'}">`;
+                  };
+
+                  return list.slice(0, TOP).map(t => {
+                    const team = t.Constructor || t.constructor_info || {};
+                    const tid  = team.constructorId || '';
+                    const c    = teamColor[tid] || colors[tid] || '#888888';
+                    const drv  = (teamDrivers[tid] || []).join(' · ');
+                    const wins = Number(t.wins || 0);
+                    const sub  = [drv, wins ? `${wins} vittori${wins === 1 ? 'a' : 'e'}` : ''].filter(Boolean).join(' · ');
+
+                    return `
+                      <div style="display:grid;grid-template-columns:40px 44px minmax(0,1fr) ${CAR_W}px auto;
+                                  align-items:center;gap:8px;margin-bottom:6px;padding:6px 10px;
+                                  border-radius:10px;
+                                  background:linear-gradient(90deg, ${c}40, ${c}10 60%, transparent)">
+                        <div style="font-size:30px;font-weight:700;color:${c};text-align:center">${t.position}</div>
+                        ${logo(tid)}
+                        <div style="text-align:left;line-height:1.2;overflow:hidden">
+                          <div style="font-size:15px;font-weight:600;white-space:nowrap;
+                                      overflow:hidden;text-overflow:ellipsis">${team.name || ''}</div>
+                          <div style="font-size:12px;opacity:.75;white-space:nowrap;
+                                      overflow:hidden;text-overflow:ellipsis">${sub}</div>
+                        </div>
+                        <div>${cars[tid] ? `<img src="${cars[tid]}" style="width:${CAR_W}px;height:auto;display:block"
+                               onerror="this.style.visibility='hidden'">` : ''}</div>
+                        <div style="font-size:22px;font-weight:700;white-space:nowrap">
+                          ${t.points} <span style="font-size:11px;font-weight:600">PTS</span>
+                        </div>
+                      </div>`;
+                  }).join('');
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: Gara in Live
+          - type: vertical-stack
+            cards:
+              - type: custom:button-card
+                icon: mdi:formula1
+                show_state: false
+                tap_action:
+                  action: none
+                styles:
+                  card:
+                    - background: '#e10600'
+                    - border-radius: 16px
+                    - padding: 8px 16px
+                    - height: 56px
+                  grid:
+                    - grid-template-areas: '"i n"'
+                    - grid-template-columns: 48px 1fr
+                  icon:
+                    - color: white
+                    - width: 42px
+                  name:
+                    - color: white
+                    - font-size: 26px
+                    - font-weight: 700
+                    - justify-self: start
+                name: Live Session
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #7b3fd4, #5a2db0)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ return entity ? String(entity.state).toUpperCase() :
+                      '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_current_session
+                    name: Current Session
+                    icon: mdi:flag-checkered
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #3a3a3a, #1f1f1f)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ return entity ? String(entity.state).toUpperCase() :
+                      '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_session_status
+                    name: Session Status
+                    icon: mdi:timer-outline
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #7b3fd4, #5a2db0)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ return entity ? String(entity.state).toUpperCase() :
+                      '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_race_lap_count
+                    name: Current Lap
+                    icon: mdi:counter
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #7b3fd4, #5a2db0)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ return entity ? String(entity.state).toUpperCase() :
+                      '—' ]]]
+                    styles:
+                      card:
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                        - background: |
+                            [[[
+                              const s = (entity?.state || '').toUpperCase();
+                              if (s.includes('RED')) return 'linear-gradient(135deg,#e53935,#b71c1c)';
+                              if (s.includes('YELLOW') || s.includes('SC')) return 'linear-gradient(135deg,#fbc02d,#f57f17)';
+                              return 'linear-gradient(135deg,#4caf50,#2e7d32)';
+                            ]]]
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_status
+                    name: Track Status
+                    icon: mdi:flag
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #7b3fd4, #5a2db0)'
+                    tap_action:
+                      action: more-info
+                    state_display: |
+                      [[[
+                        const s = (entity?.state || '').toUpperCase();
+                        if (s.includes('VSC') || s.includes('VIRTUAL')) return 'VSC';
+                        if (s.includes('SC')) return 'DEPLOYED';
+                        return 'IN PITS';
+                      ]]]
+                    styles:
+                      card:
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                        - background: |
+                            [[[
+                              const s = (entity?.state || '').toUpperCase();
+                              return s.includes('SC')
+                                ? 'linear-gradient(135deg,#fbc02d,#f57f17)'
+                                : 'linear-gradient(135deg,#4caf50,#2e7d32)';
+                            ]]]
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_status
+                    name: Safety Car
+                    icon: mdi:car-emergency
+              - type: custom:button-card
+                icon: mdi:formula1
+                show_state: false
+                tap_action:
+                  action: none
+                styles:
+                  card:
+                    - background: '#e10600'
+                    - border-radius: 16px
+                    - padding: 8px 16px
+                    - height: 56px
+                  grid:
+                    - grid-template-areas: '"i n"'
+                    - grid-template-columns: 48px 1fr
+                  icon:
+                    - color: white
+                    - width: 42px
+                  name:
+                    - color: white
+                    - font-size: 26px
+                    - font-weight: 700
+                    - justify-self: start
+                name: Weather
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #ff5722, #e64a19)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ const v = entity?.attributes.air_temperature; return v
+                      != null ? v + '°C' : '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Air Temperature
+                    icon: mdi:thermometer
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #ff5722, #e64a19)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ const v = entity?.attributes.track_temperature; return
+                      v != null ? v + '°C' : '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Track Temperature
+                    icon: mdi:road-variant
+              - type: grid
+                columns: 3
+                square: false
+                cards:
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #00bcd4, #0097a7)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ const v = entity?.attributes.rainfall; return v !=
+                      null ? v + ' mm' : '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Rainfall
+                    icon: mdi:weather-partly-rainy
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #8bc34a, #689f38)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ const v = entity?.attributes.wind_speed; return v !=
+                      null ? v + ' m/s' : '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Wind Speed
+                    icon: mdi:weather-windy
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #8bc34a, #689f38)'
+                    tap_action:
+                      action: more-info
+                    state_display: |
+                      [[[
+                        const d = Number(entity?.attributes.wind_direction);
+                        if (isNaN(d)) return '—';
+                        const c = ['N','NE','E','SE','S','SW','W','NW'];
+                        return c[Math.round(d / 45) % 8] + ' (' + d + '°)';
+                      ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Wind Direction
+                    icon: mdi:compass
+              - type: grid
+                columns: 2
+                square: false
+                cards:
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #607d8b, #455a64)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ const v = entity?.attributes.humidity; return v !=
+                      null ? v + '%' : '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Humidity
+                    icon: mdi:water-percent
+                  - type: custom:button-card
+                    show_state: true
+                    variables:
+                      bg: 'linear-gradient(135deg, #607d8b, #455a64)'
+                    tap_action:
+                      action: more-info
+                    state_display: >
+                      [[[ const v = entity?.attributes.air_pressure ??
+                      entity?.attributes.pressure; return v != null ? v + ' hPa'
+                      : '—' ]]]
+                    styles:
+                      card:
+                        - background: '[[[ return variables.bg ]]]'
+                        - border-radius: 16px
+                        - padding: 14px 6px
+                        - height: 90px
+                        - color: white
+                        - box-shadow: none
+                      grid:
+                        - grid-template-areas: '"i n" "s s"'
+                        - grid-template-columns: auto auto
+                        - justify-content: center
+                        - column-gap: 8px
+                        - row-gap: 6px
+                      icon:
+                        - color: white
+                        - width: 22px
+                      name:
+                        - font-size: 15px
+                        - font-weight: 600
+                      state:
+                        - font-size: 20px
+                        - font-weight: 700
+                    entity: sensor.f1_track_weather
+                    name: Pressure
+                    icon: mdi:gauge
+      - type: grid
+        cards:
+          - type: heading
+            heading: New section
+          - type: custom:button-card
+            entity: sensor.f1_session_status
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"main"'
+                - grid-template-columns: 1fr
+              custom_fields: null
+            custom_fields:
+              main: |
+                [[[
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byNum = {}, byTla = {};
+                  roster.forEach(r => {
+                    if (r.racing_number != null) byNum[String(r.racing_number)] = r;
+                    if (r.tla) byTla[String(r.tla).toUpperCase()] = r;
+                  });
+                  const toList = v => Array.isArray(v) ? v
+                    : (v && typeof v === 'object')
+                      ? Object.entries(v).map(([k, x]) => (x && typeof x === 'object') ? { _key: k, ...x } : { _key: k, value: x })
+                      : [];
+                  const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] != null && o[k] !== '') return o[k]; return undefined; };
+                  const who = o => {
+                    const t = String(pick(o, 'tla', 'driver_tla', 'code', 'driver') || '').toUpperCase();
+                    const n = String(pick(o, 'racing_number', 'driver_number', 'number', 'car', 'car_number', '_key') ?? '');
+                    return byTla[t] || byNum[n] || byTla[n.toUpperCase()] || { tla: t.length === 3 ? t : n };
+                  };
+                  const col = r => r?.team_color ? '#' + String(r.team_color).replace('#', '') : '#888888';
+                  const tag = r => `<span style="display:inline-flex;align-items:center;gap:6px">
+                      <span style="width:4px;height:16px;border-radius:2px;background:${col(r)}"></span>
+                      <span style="font-weight:700;color:${col(r)}">${r.tla || '?'}</span></span>`;
+                  const firstList = (a, ...keys) => { for (const k of keys) { const l = toList(a[k]); if (l.length) return l; } return []; };
+                  const none = '<div style="opacity:.7;text-align:center;padding:8px">Nessun dato disponibile</div>';
+                  const row = (inner, extra = '') => `<div style="display:grid;align-items:center;gap:6px;padding:6px 10px;
+                      margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);${extra}">${inner}</div>`;
+
+                  const S = id => states[id] || {};
+                  const nr = S('sensor.f1_next_race').attributes || {};
+                  const name = (pick(nr, 'race_name', 'raceName', 'name') || 'Grand Prix').replace('Grand Prix', 'GP');
+                  const country = pick(nr, 'country', 'circuit_country') || nr.Circuit?.Location?.country || '';
+                  const iso = { 'Australia':'au','China':'cn','Japan':'jp','Bahrain':'bh','Saudi Arabia':'sa','USA':'us',
+                    'United States':'us','Italy':'it','Monaco':'mc','Spain':'es','Canada':'ca','Austria':'at','UK':'gb',
+                    'United Kingdom':'gb','Great Britain':'gb','Belgium':'be','Hungary':'hu','Netherlands':'nl',
+                    'Azerbaijan':'az','Singapore':'sg','Mexico':'mx','Brazil':'br','Qatar':'qa','UAE':'ae',
+                    'United Arab Emirates':'ae','Abu Dhabi':'ae','Portugal':'pt' };
+                  const cc = iso[country];
+                  const flag = cc ? `<img src="https://flagcdn.com/w80/${cc}.png" style="width:34px;height:23px;object-fit:cover;border-radius:3px">` : '';
+
+                  const sess = String(S('sensor.f1_current_session').state || '—').toUpperCase();
+                  const st = String(S('sensor.f1_session_status').state || '').toLowerCase();
+                  const live = ['live', 'started', 'running', 'active'].some(x => st.includes(x));
+
+                  const lapS = S('sensor.f1_race_lap_count');
+                  const lap = Number(lapS.state) || 0;
+                  const tot = Number(pick(lapS.attributes || {}, 'total_laps', 'total', 'laps_total', 'TotalLaps')) || 0;
+                  const pct = tot ? Math.min(100, Math.round(lap / tot * 100)) : 0;
+                  const lapTxt = tot ? `Lap: ${lap}/${tot} <span style="opacity:.7">(${tot - lap} left)</span>` : (lap ? `Lap: ${lap}` : '');
+
+                  const ts = String(S('sensor.f1_track_status').state || '—').toUpperCase();
+                  const tsc = ts.includes('RED') ? '#e53935' : (ts.includes('YELLOW') || ts.includes('SC')) ? '#fbc02d' : '#4caf50';
+
+                  const w = S('sensor.f1_track_weather').attributes || {};
+                  const wd = Number(w.wind_direction);
+                  const dir = isNaN(wd) ? '' : ' ' + ['N','NE','E','SE','S','SW','W','NW'][Math.round(wd / 45) % 8];
+                  const rain = Number(w.rainfall);
+                  const cell = (l, v) => `<div style="text-align:center"><div style="font-size:11px;opacity:.65;text-transform:uppercase">${l}</div>
+                      <div style="font-size:15px;font-weight:700">${v ?? '—'}</div></div>`;
+
+                  return `
+                    <div style="display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;
+                                padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.15)">
+                      ${flag}
+                      <div style="text-align:left;overflow:hidden">
+                        <div style="font-size:20px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${name}</div>
+                        <div style="font-size:12px;letter-spacing:1px;opacity:.85">${sess}
+                          ${live ? '<span style="color:#4caf50;font-weight:700;margin-left:6px">LIVE</span>' : ''}</div>
+                      </div>
+                      <div style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;
+                                  color:${tsc};border:1px solid ${tsc};white-space:nowrap">TRACK ${ts}</div>
+                    </div>
+                    ${lapTxt ? `<div style="padding:8px 0 2px;text-align:left;font-size:14px">${lapTxt}
+                      <div style="height:4px;border-radius:2px;background:rgba(255,255,255,.15);margin-top:4px">
+                        <div style="height:4px;border-radius:2px;width:${pct}%;background:#e10600"></div></div></div>` : ''}
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px 6px;padding-top:10px">
+                      ${cell('Wind', w.wind_speed != null ? w.wind_speed + ' m/s' + dir : null)}
+                      ${cell('Track', w.track_temperature != null ? w.track_temperature + ' °C' : null)}
+                      ${cell('Air', w.air_temperature != null ? w.air_temperature + ' °C' : null)}
+                      ${cell('Humidity', w.humidity != null ? w.humidity + '%' : null)}
+                      ${cell('Pressure', pick(w, 'air_pressure', 'pressure') != null ? pick(w, 'air_pressure', 'pressure') + ' mb' : null)}
+                      ${cell('Rain', isNaN(rain) ? null : (rain > 0 ? 'Yes' : 'No'))}
+                    </div>`;
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: New section
+          - type: custom:button-card
+            entity: sensor.f1_race_control
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"main"'
+                - grid-template-columns: 1fr
+              custom_fields: null
+            custom_fields:
+              main: |
+                [[[
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byNum = {}, byTla = {};
+                  roster.forEach(r => {
+                    if (r.racing_number != null) byNum[String(r.racing_number)] = r;
+                    if (r.tla) byTla[String(r.tla).toUpperCase()] = r;
+                  });
+                  const toList = v => Array.isArray(v) ? v
+                    : (v && typeof v === 'object')
+                      ? Object.entries(v).map(([k, x]) => (x && typeof x === 'object') ? { _key: k, ...x } : { _key: k, value: x })
+                      : [];
+                  const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] != null && o[k] !== '') return o[k]; return undefined; };
+                  const who = o => {
+                    const t = String(pick(o, 'tla', 'driver_tla', 'code', 'driver') || '').toUpperCase();
+                    const n = String(pick(o, 'racing_number', 'driver_number', 'number', 'car', 'car_number', '_key') ?? '');
+                    return byTla[t] || byNum[n] || byTla[n.toUpperCase()] || { tla: t.length === 3 ? t : n };
+                  };
+                  const col = r => r?.team_color ? '#' + String(r.team_color).replace('#', '') : '#888888';
+                  const tag = r => `<span style="display:inline-flex;align-items:center;gap:6px">
+                      <span style="width:4px;height:16px;border-radius:2px;background:${col(r)}"></span>
+                      <span style="font-weight:700;color:${col(r)}">${r.tla || '?'}</span></span>`;
+                  const firstList = (a, ...keys) => { for (const k of keys) { const l = toList(a[k]); if (l.length) return l; } return []; };
+                  const none = '<div style="opacity:.7;text-align:center;padding:8px">Nessun dato disponibile</div>';
+                  const row = (inner, extra = '') => `<div style="display:grid;align-items:center;gap:6px;padding:6px 10px;
+                      margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);${extra}">${inner}</div>`;
+
+                  const msg = entity?.state;
+                  if (!msg || ['unknown', 'unavailable'].includes(msg)) return none;
+                  const a = entity.attributes || {};
+                  const flag = String(pick(a, 'flag', 'category') || '').toUpperCase();
+                  const fc = flag.includes('RED') ? '#e53935' : flag.includes('YELLOW') ? '#fbc02d'
+                           : flag.includes('GREEN') || flag.includes('CLEAR') ? '#4caf50' : 'rgba(255,255,255,.25)';
+                  return `<div style="display:flex;align-items:center;gap:12px;text-align:left">
+                      <div style="flex:none;width:40px;height:40px;border-radius:50%;border:2px solid white;display:flex;
+                                  align-items:center;justify-content:center;font-size:13px;font-weight:900">FIA</div>
+                      <div style="width:1px;align-self:stretch;background:${fc}"></div>
+                      <div style="font-size:14px;font-weight:700;text-transform:uppercase;line-height:1.3">${msg}</div>
+                    </div>`;
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: New section
+          - type: custom:button-card
+            entity: sensor.f1_pitstops
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"title" "list"'
+                - grid-template-columns: 1fr
+              custom_fields:
+                title:
+                  - font-size: 22px
+                  - font-weight: 800
+                  - letter-spacing: 1px
+                  - text-transform: uppercase
+                  - text-align: center
+                  - padding: 2px 0 8px
+                  - margin-bottom: 8px
+                  - border-bottom: 1px solid rgba(255,255,255,0.2)
+            custom_fields:
+              title: Pit stops & tyres
+              list: |
+                [[[
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byNum = {}, byTla = {};
+                  roster.forEach(r => {
+                    if (r.racing_number != null) byNum[String(r.racing_number)] = r;
+                    if (r.tla) byTla[String(r.tla).toUpperCase()] = r;
+                  });
+                  const toList = v => Array.isArray(v) ? v
+                    : (v && typeof v === 'object')
+                      ? Object.entries(v).map(([k, x]) => (x && typeof x === 'object') ? { _key: k, ...x } : { _key: k, value: x })
+                      : [];
+                  const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] != null && o[k] !== '') return o[k]; return undefined; };
+                  const who = o => {
+                    const t = String(pick(o, 'tla', 'driver_tla', 'code', 'driver') || '').toUpperCase();
+                    const n = String(pick(o, 'racing_number', 'driver_number', 'number', 'car', 'car_number', '_key') ?? '');
+                    return byTla[t] || byNum[n] || byTla[n.toUpperCase()] || { tla: t.length === 3 ? t : n };
+                  };
+                  const col = r => r?.team_color ? '#' + String(r.team_color).replace('#', '') : '#888888';
+                  const tag = r => `<span style="display:inline-flex;align-items:center;gap:6px">
+                      <span style="width:4px;height:16px;border-radius:2px;background:${col(r)}"></span>
+                      <span style="font-weight:700;color:${col(r)}">${r.tla || '?'}</span></span>`;
+                  const firstList = (a, ...keys) => { for (const k of keys) { const l = toList(a[k]); if (l.length) return l; } return []; };
+                  const none = '<div style="opacity:.7;text-align:center;padding:8px">Nessun dato disponibile</div>';
+                  const row = (inner, extra = '') => `<div style="display:grid;align-items:center;gap:6px;padding:6px 10px;
+                      margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);${extra}">${inner}</div>`;
+
+                  const tyreCol = { S:'#e10600', M:'#ffd400', H:'#f0f0f0', I:'#43b02a', W:'#0067ad' };
+                  const tyreAttr = states['sensor.f1_current_tyres']?.attributes || {};
+                  const tyres = {};
+                  firstList(tyreAttr, 'drivers', 'tyres', 'cars', 'current_tyres').forEach(t => {
+                    const r = who(t);
+                    tyres[r.tla] = t;
+                  });
+                  const a = entity?.attributes || {};
+                  const cars = firstList(a, 'cars', 'drivers', 'pitstops', 'pit_stops', 'stops');
+                  if (!cars.length) return none;
+
+                  const fmt = v => (v == null || v === '' || isNaN(Number(v))) ? (v ?? '—') : Number(v).toFixed(1);
+                  const head = `<div style="display:grid;grid-template-columns:60px 62px 26px 1fr 1fr;gap:6px;padding:0 10px 4px;
+                      font-size:11px;opacity:.6;text-align:center"><div style="text-align:left">TLA</div><div>TYRES</div>
+                      <div>ST</div><div>PIT</div><div>LANE</div></div>`;
+
+                  return head + cars.map(c => {
+                    const r = who(c);
+                    const stops = toList(pick(c, 'stops', 'pitstops', 'pit_stops') || []);
+                    const last = stops[stops.length - 1] || c;
+                    const n = pick(c, 'count', 'stops_count', 'total') ?? stops.length;
+                    const pit = pick(last, 'pit_stop_time', 'stop_time', 'stationary_time', 'duration');
+                    const lane = pick(last, 'pit_lane_time', 'lane_time', 'pit_lane_duration');
+                    const t = tyres[r.tla] || {};
+                    const comp = String(pick(t, 'compound', 'tyre', 'tyre_compound') || '').toUpperCase().charAt(0);
+                    const age = pick(t, 'tyre_age', 'age', 'stint_laps', 'laps');
+                    const tc = tyreCol[comp] || '#777';
+                    const tyre = comp ? `<span style="display:inline-flex;align-items:center;gap:4px">
+                        <span style="width:20px;height:20px;border-radius:50%;border:2px solid ${tc};color:${tc};font-size:11px;
+                                     font-weight:900;display:inline-flex;align-items:center;justify-content:center">${comp}</span>
+                        <span style="font-size:12px">${age ?? ''}</span></span>` : '—';
+                    return row(`${tag(r)}<div style="text-align:center">${tyre}</div>
+                        <div style="text-align:center">${n}</div><div style="text-align:center">${fmt(pit)}</div>
+                        <div style="text-align:center">${fmt(lane)}</div>`,
+                      'grid-template-columns:60px 62px 26px 1fr 1fr;font-size:14px');
+                  }).join('');
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: New section
+          - type: custom:button-card
+            entity: sensor.f1_track_limits
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"title" "list"'
+                - grid-template-columns: 1fr
+              custom_fields:
+                title:
+                  - font-size: 22px
+                  - font-weight: 800
+                  - letter-spacing: 1px
+                  - text-transform: uppercase
+                  - text-align: center
+                  - padding: 2px 0 8px
+                  - margin-bottom: 8px
+                  - border-bottom: 1px solid rgba(255,255,255,0.2)
+            custom_fields:
+              title: Track limits
+              list: |
+                [[[
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byNum = {}, byTla = {};
+                  roster.forEach(r => {
+                    if (r.racing_number != null) byNum[String(r.racing_number)] = r;
+                    if (r.tla) byTla[String(r.tla).toUpperCase()] = r;
+                  });
+                  const toList = v => Array.isArray(v) ? v
+                    : (v && typeof v === 'object')
+                      ? Object.entries(v).map(([k, x]) => (x && typeof x === 'object') ? { _key: k, ...x } : { _key: k, value: x })
+                      : [];
+                  const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] != null && o[k] !== '') return o[k]; return undefined; };
+                  const who = o => {
+                    const t = String(pick(o, 'tla', 'driver_tla', 'code', 'driver') || '').toUpperCase();
+                    const n = String(pick(o, 'racing_number', 'driver_number', 'number', 'car', 'car_number', '_key') ?? '');
+                    return byTla[t] || byNum[n] || byTla[n.toUpperCase()] || { tla: t.length === 3 ? t : n };
+                  };
+                  const col = r => r?.team_color ? '#' + String(r.team_color).replace('#', '') : '#888888';
+                  const tag = r => `<span style="display:inline-flex;align-items:center;gap:6px">
+                      <span style="width:4px;height:16px;border-radius:2px;background:${col(r)}"></span>
+                      <span style="font-weight:700;color:${col(r)}">${r.tla || '?'}</span></span>`;
+                  const firstList = (a, ...keys) => { for (const k of keys) { const l = toList(a[k]); if (l.length) return l; } return []; };
+                  const none = '<div style="opacity:.7;text-align:center;padding:8px">Nessun dato disponibile</div>';
+                  const row = (inner, extra = '') => `<div style="display:grid;align-items:center;gap:6px;padding:6px 10px;
+                      margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);${extra}">${inner}</div>`;
+
+                  const a = entity?.attributes || {};
+                  const ds = firstList(a, 'drivers', 'violations', 'by_driver', 'cars');
+                  if (!ds.length) return none;
+                  const pill = (t, c) => `<span style="font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;
+                      color:${c};border:1px solid ${c};background:${c}22;white-space:nowrap">${t}</span>`;
+                  return ds.map(d => {
+                    const r = who(d);
+                    const n = Number(pick(d, 'count', 'violations', 'total', 'deletions', 'value')) || 0;
+                    const warn = !!pick(d, 'warning', 'black_white_flag', 'bw_flag', 'warned') || n >= 3;
+                    const pen = pick(d, 'penalty', 'penalty_text');
+                    const c = pen ? '#ef5350' : warn ? '#fbc02d' : 'rgba(255,255,255,.5)';
+                    return row(`${tag(r)}
+                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                          <span style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${c};color:${c};font-size:11px;
+                                       font-weight:800;display:inline-flex;align-items:center;justify-content:center">${n}</span>
+                          ${warn ? pill('WARNING', '#fbc02d') : ''}${pen ? pill(String(pen).toUpperCase(), '#ef5350') : ''}
+                        </div>`, `grid-template-columns:70px 1fr;${pen ? 'box-shadow:inset 3px 0 0 #ef5350' : warn ? 'box-shadow:inset 3px 0 0 #fbc02d' : ''}`);
+                  }).join('');
+                ]]]
+      - type: grid
+        cards:
+          - type: heading
+            heading: New section
+          - type: custom:button-card
+            entity: sensor.f1_investigations
+            show_icon: false
+            show_name: false
+            show_state: false
+            tap_action:
+              action: none
+            styles:
+              card:
+                - background: 'linear-gradient(180deg, #1c1c2e, #121220)'
+                - border-radius: 16px
+                - padding: 12px
+                - color: white
+              grid:
+                - grid-template-areas: '"title" "list"'
+                - grid-template-columns: 1fr
+              custom_fields:
+                title:
+                  - font-size: 22px
+                  - font-weight: 800
+                  - letter-spacing: 1px
+                  - text-transform: uppercase
+                  - text-align: center
+                  - padding: 2px 0 8px
+                  - margin-bottom: 8px
+                  - border-bottom: 1px solid rgba(255,255,255,0.2)
+            custom_fields:
+              title: Investigations & penalties
+              list: |
+                [[[
+                  const roster = states['sensor.f1_driver_list']?.attributes?.drivers || [];
+                  const byNum = {}, byTla = {};
+                  roster.forEach(r => {
+                    if (r.racing_number != null) byNum[String(r.racing_number)] = r;
+                    if (r.tla) byTla[String(r.tla).toUpperCase()] = r;
+                  });
+                  const toList = v => Array.isArray(v) ? v
+                    : (v && typeof v === 'object')
+                      ? Object.entries(v).map(([k, x]) => (x && typeof x === 'object') ? { _key: k, ...x } : { _key: k, value: x })
+                      : [];
+                  const pick = (o, ...keys) => { for (const k of keys) if (o && o[k] != null && o[k] !== '') return o[k]; return undefined; };
+                  const who = o => {
+                    const t = String(pick(o, 'tla', 'driver_tla', 'code', 'driver') || '').toUpperCase();
+                    const n = String(pick(o, 'racing_number', 'driver_number', 'number', 'car', 'car_number', '_key') ?? '');
+                    return byTla[t] || byNum[n] || byTla[n.toUpperCase()] || { tla: t.length === 3 ? t : n };
+                  };
+                  const col = r => r?.team_color ? '#' + String(r.team_color).replace('#', '') : '#888888';
+                  const tag = r => `<span style="display:inline-flex;align-items:center;gap:6px">
+                      <span style="width:4px;height:16px;border-radius:2px;background:${col(r)}"></span>
+                      <span style="font-weight:700;color:${col(r)}">${r.tla || '?'}</span></span>`;
+                  const firstList = (a, ...keys) => { for (const k of keys) { const l = toList(a[k]); if (l.length) return l; } return []; };
+                  const none = '<div style="opacity:.7;text-align:center;padding:8px">Nessun dato disponibile</div>';
+                  const row = (inner, extra = '') => `<div style="display:grid;align-items:center;gap:6px;padding:6px 10px;
+                      margin-bottom:5px;border-radius:10px;background:rgba(255,255,255,.05);${extra}">${inner}</div>`;
+
+                  const a = entity?.attributes || {};
+                  const items = firstList(a, 'items', 'investigations', 'penalties', 'active', 'entries', 'drivers');
+                  if (!items.length) return '<div style="opacity:.7;text-align:center;padding:8px">Nessuna investigazione in corso</div>';
+                  return items.map(i => {
+                    const r = who(i);
+                    const txt = String(pick(i, 'penalty', 'status', 'decision', 'reason', 'message', 'value') || '').toUpperCase();
+                    const pen = txt.includes('PENALTY') || txt.includes('SEC') || txt.includes('GRID');
+                    const c = pen ? '#ef5350' : '#fbc02d';
+                    return row(`${tag(r)}<div style="text-align:left"><span style="font-size:10px;font-weight:800;padding:3px 8px;
+                        border-radius:999px;color:${c};border:1px solid ${c};background:${c}22">${txt || 'NOTED'}</span></div>`,
+                      `grid-template-columns:70px 1fr;box-shadow:inset 3px 0 0 ${c}`);
+                  }).join('');
+                ]]]
+    background:
+      opacity: 33
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+      image:
+        media_content_id: media-source://image_upload/b4f11a8e0fe383ce38db5803963b9f2f
+        media_content_type: image/jpeg
+        metadata:
+          title: IMG_1852.jpeg
+          thumbnail: /api/image/serve/b4f11a8e0fe383ce38db5803963b9f2f/256x256
+          media_class: image
+          navigateIds:
+            - {}
+            - media_content_type: app
+              media_content_id: media-source://image_upload
+    cards: []
+    max_columns: 4
+    title: F1
+    icon: mdi:car
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# FIA F1'
+    visible:
+      - user: 2f9103779fcc413ba915b1b1d7498317
+  - type: sections
+    title: WEC
+    path: wec
+    icon: mdi:flag-checkered
+    max_columns: 3
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# FIA World Endurance Championship'
+    visible:
+      - user: 2f9103779fcc413ba915b1b1d7498317
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Prossima gara
+            icon: mdi:flag-checkered
+          - type: markdown
+            content: >-
+              {% set e = 'sensor.fia_wec_next_race' %}
+
+              {% if states(e) in ['unknown', 'unavailable'] %}
+
+              Nessuna gara in programma.
+
+              {% else %}
+
+              {% set start = as_datetime(states(e)) %}
+
+              {% set left = start - now() %}
+
+              {% if state_attr(e, 'thumb') %}<img src="{{ state_attr(e, 'thumb')
+              }}" width="100%">{% endif %}
+
+
+              ## {{ state_attr(e, 'name') }}
+
+
+              📍 **{{ state_attr(e, 'circuit') }}**, {{ state_attr(e, 'country')
+              }} · Round {{ state_attr(e, 'round') }}
+
+
+              {% if state_attr(e, 'time_confirmed') %}
+
+              🕒 {{ as_local(start).strftime('%d/%m/%Y alle %H:%M') }}
+
+              {% else %}
+
+              🗓️ {{ start.strftime('%d/%m/%Y') }} · orario da confermare
+
+              {% endif %}
+
+
+              {% if left.total_seconds() > 0 %}
+
+              ⏳ **{{ left.days }} giorni e {{ (left.seconds // 3600) }} ore** al
+              via
+
+              {% else %}
+
+              🟢 **Gara in corso**
+
+              {% endif %}
+
+              {% endif %}
+          - type: tile
+            entity: sensor.fia_wec_next_session
+            name: Prossima sessione
+            icon: mdi:timer-outline
+            vertical: false
+          - type: tile
+            entity: binary_sensor.fia_wec_race_weekend
+            name: Weekend di gara
+            icon: mdi:calendar-star
+          - type: tile
+            entity: binary_sensor.fia_wec_session_live
+            name: In pista ora
+            icon: mdi:car-sports
+            grid_options:
+              columns: 12
+              rows: 1
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.fia_wec_session_live
+                state: 'on'
+            card:
+              type: markdown
+              content: >-
+                {% set e = 'binary_sensor.fia_wec_session_live' %}
+
+                ### 🔴 LIVE · {{ state_attr(e, 'name') }}
+
+
+                {% if state_attr(e, 'start') %}
+
+                Iniziata alle {{ as_local(as_datetime(state_attr(e,
+                'start'))).strftime('%H:%M') }},
+
+                fine stimata alle {{ as_local(as_datetime(state_attr(e,
+                'end'))).strftime('%H:%M') }}
+
+                {% endif %}
+
+
+                [Live timing ufficiale](https://fiawec.alkamelsystems.com)
+          - type: markdown
+            title: Programma del weekend
+            content: >-
+              {% set e = 'sensor.fia_wec_next_race' %}
+
+              {% set sessions = state_attr(e, 'sessions') or [] %}
+
+              {% set days = ['lun', 'mar', 'mer', 'gio', 'ven', 'sab', 'dom'] %}
+
+              {% if sessions %}
+
+              | Sessione | Quando |
+
+              |:--|:--|
+
+              {%- for s in sessions %}
+
+              {%- set t = as_local(as_datetime(s.start)) if s.time_confirmed
+              else as_datetime(s.start) %}
+
+              | {{ s.name | replace(state_attr(e, 'event_name') ~ ' ', '') }} |
+              {{ days[t.weekday()] }} {{ t.strftime('%d/%m') }}{% if
+              s.time_confirmed %} {{ t.strftime('%H:%M') }}{% else %} · da
+              conf.{% endif %} |
+
+              {%- endfor %}
+
+              {% else %}
+
+              Programma non ancora disponibile.
+
+              {% endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Ultima gara
+            icon: mdi:trophy
+          - type: markdown
+            content: >-
+              {% set e = 'sensor.fia_wec_last_race' %}
+
+              {% set results = state_attr(e, 'results') or {} %}
+
+              {% set medals = ['🥇', '🥈', '🥉'] %}
+
+              ## {{ states(e) }}
+
+
+              {{ state_attr(e, 'circuit') }} · {{
+              as_local(as_datetime(state_attr(e, 'start'))).strftime('%d/%m/%Y')
+              if state_attr(e, 'start') else '' }}
+
+
+              {% if results %}
+
+              {% for cls, rows in results.items() %}
+
+              **{{ cls }}**
+
+
+              {% for r in rows[:3] %}
+
+              {{ medals[loop.index0] }} **#{{ r.car_number }}** {{ r.team }}{%
+              if r.drivers %} · {{ r.drivers | join(', ') }}{% endif %}{% if
+              r.time %} · `{{ r.time }}`{% endif %}
+
+
+              {% endfor %}
+
+              {% endfor %}
+
+              {% else %}
+
+              _Risultato non ancora pubblicato._
+
+              {% endif %}
+          - type: markdown
+            title: Classifica piloti
+            content: >-
+              {% set standings = state_attr('sensor.fia_wec_last_race',
+              'standings') or {} %}
+
+              {% if standings %}
+
+              {% for cls, rows in standings.items() %}
+
+              **{{ cls }}**
+
+
+              | Pos | Auto | Piloti | Punti |
+
+              |:-:|:-:|:--|--:|
+
+              {%- for r in rows[:5] %}
+
+              | {{ r.position }} | #{{ r.car_number }} | {{ r.drivers | join(',
+              ') }} | {{ r.points | int }} |
+
+              {%- endfor %}
+
+
+              {% endfor %}
+
+              {% else %}
+
+              _Classifica non disponibile per l'ultima gara._
+
+              {% endif %}
+          - type: markdown
+            title: Circuito della prossima gara
+            content: >-
+              {% set map = state_attr('sensor.fia_wec_next_race', 'track_map')
+              %}
+
+              {% if map %}<img src="{{ map }}" width="100%">{% else %}_Mappa non
+              disponibile._{% endif %}
+      - type: grid
+        cards:
+          - type: heading
+            heading: Stagione
+            icon: mdi:calendar-month
+          - type: markdown
+            content: >-
+              {% set e = 'sensor.fia_wec_races_completed' %}
+
+              {% set done = states(e) | int(0) %}
+
+              {% set total = state_attr(e, 'total_races') | int(0) %}
+
+              {% set pct = (100 * done / total) | round(0) if total else 0 %}
+
+              ### Stagione {{ state_attr(e, 'season') }} · {{ done }}/{{ total
+              }} gare
+
+
+              <ha-alert alert-type="info">{{ pct | int }}% della stagione
+              completata</ha-alert>
+
+
+              | | Round | Gara | Data |
+
+              |:-:|:-:|:--|:--|
+
+              {%- for r in state_attr(e, 'races') or [] %}
+
+              | {{ '❌' if r.cancelled else ('✅' if r.finished else '⏳') }} | {{
+              r.round }} | {{ r.name }}{% if r.cancelled %} _({{ r.status }})_{%
+              endif %} | {{ r.date[8:10] }}/{{ r.date[5:7] }} |
+
+              {%- endfor %}
+          - type: calendar
+            entities:
+              - calendar.fia_wec_calendar
+            initial_view: dayGridMonth
+            title: Calendario
+    background:
+      opacity: 33
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+      image:
+        media_content_id: media-source://image_upload/36c1c275144acc436128b09dba2fe336
+        media_content_type: image/jpeg
+        metadata:
+          title: FPM-GT-0598.jpg
+          thumbnail: /api/image/serve/36c1c275144acc436128b09dba2fe336/256x256
+          media_class: image
+          navigateIds:
+            - {}
+            - media_content_type: app
+              media_content_id: media-source://image_upload
+    cards: []
+  - title: Dakar Rally
+    path: dakar
+    icon: mdi:motorbike
+    type: sections
+    max_columns: 3
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# Dakar Rally'
+    visible:
+      - user: 2f9103779fcc413ba915b1b1d7498317
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Overview
+            icon: mdi:flag-variant
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.dakar_rally_rally_status' %}
+              {% set status = states(e) %}
+              {% set season = state_attr(e, 'season') %}
+              {% set banner = state_attr(e, 'banner') %}
+              {% set start = state_attr(e, 'start') %}
+              {% set finish = state_attr(e, 'end') %}
+              {% set total = state_attr(e, 'total_stages') %}
+              {% set done = state_attr(e, 'stages_completed') %}
+              {% if banner %}<img src="{{ banner }}" width="100%">{% endif %}
+
+              {% if status == 'upcoming' %}
+              {% set days = state_attr(e, 'days_to_start') | int(0) %}
+              ## Dakar {{ season }}
+
+              Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**:
+              {{ as_datetime(start).strftime('%-d %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }},
+              a prologue and {{ total }} stages.
+              {% elif status == 'racing' %}
+              ## {{ state_attr(e, 'current_stage') }} today
+
+              Bivouac **{{ state_attr(e, 'bivouac') or 'unknown' }}** ·
+              {{ done }} of {{ total }} stages completed ·
+              finish in {{ state_attr(e, 'days_to_finish') }} days.
+              {% elif status == 'rest_day' %}
+              ## Rest day
+
+              {{ done }} of {{ total }} stages completed.
+              Racing resumes with **{{ state_attr('sensor.dakar_rally_next_stage', 'name') }}**
+              {% if state_attr('sensor.dakar_rally_next_stage', 'days_until') == 1 %}tomorrow{% else %}on {{ as_datetime(states('sensor.dakar_rally_next_stage')).strftime('%A %-d %B') }}{% endif %}.
+              {% elif status == 'finished' %}
+              ## Dakar {{ season }} is over
+
+              {{ total }} stages run, from {{ as_datetime(start).strftime('%-d %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }}.
+              The next edition appears here as soon as TheSportsDB publishes it.
+              {% else %}
+              ## Dakar Rally
+
+              Waiting for data from TheSportsDB.
+              {% endif %}
+          - type: tile
+            entity: sensor.dakar_rally_rally_status
+            name: Status
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.dakar_rally_stages_completed
+            name: Stages completed
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.dakar_rally_rally_start
+            name: Start
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.dakar_rally_rally_in_progress
+            name: In progress
+            grid_options:
+              columns: 6
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Today
+            icon: mdi:motorbike
+            visibility:
+              - condition: state
+                entity: binary_sensor.dakar_rally_stage_today
+                state: "on"
+          - type: markdown
+            visibility:
+              - condition: state
+                entity: binary_sensor.dakar_rally_stage_today
+                state: "on"
+            content: |-
+              {% set e = 'sensor.dakar_rally_current_stage' %}
+              ## {{ states(e) }}
+
+              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e, 'route') }}<br>{% endif %}
+              **Bivouac:** {{ state_attr(e, 'bivouac') or 'unknown' }}{% if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{% endif %}
+              {% if state_attr(e, 'marathon') %}
+
+              🔧 **Marathon stage:** no outside assistance at the bivouac tonight.
+              {% endif %}
+              {% if state_attr(e, 'video') %}
+
+              [▶ Stage highlights]({{ state_attr(e, 'video') }})
+              {% endif %}
+
+          - type: heading
+            heading: Next stage
+            icon: mdi:map-marker-path
+          - type: tile
+            entity: sensor.dakar_rally_next_stage
+            name: Next stage
+          - type: markdown
+            content: |-
+              {% set e = 'sensor.dakar_rally_next_stage' %}
+              {% if has_value(e) %}
+              {% set days = state_attr(e, 'days_until') | int(0) %}
+              ## {{ state_attr(e, 'name') }}
+
+              {{ as_datetime(states(e)).strftime('%A %-d %B %Y') }} ·
+              {% if days == 1 %}tomorrow{% else %}in {{ days }} days{% endif %}
+
+              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e, 'route') }}<br>{% endif %}
+              **Bivouac:** {{ state_attr(e, 'bivouac') or 'to be announced' }}{% if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{% endif %}
+              {% if state_attr(e, 'marathon') %}
+
+              🔧 **Marathon stage:** no outside assistance at the bivouac.
+              {% endif %}
+              {% else %}
+              No upcoming stage published yet.
+              {% endif %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Stages
+            icon: mdi:format-list-numbered
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.dakar_rally_stages_completed' %}
+              {% set ns = namespace(rows=[]) %}
+              {% for s in state_attr(e, 'stages') or [] %}
+              {% set ns.rows = ns.rows + [s] %}
+              {% endfor %}
+              {% for d in state_attr(e, 'rest_days') or [] %}
+              {% set ns.rows = ns.rows + [{'date': d, 'rest': true}] %}
+              {% endfor %}
+              {% set today = now().date() | string %}
+              {% if ns.rows %}
+              **Dakar {{ state_attr(e, 'season') }}** · {{ states(e) }} of {{ state_attr(e, 'total_stages') }} stages completed
+
+              | | Stage | Date | Bivouac | |
+              |:-:|:--|:--|:--|:-:|
+              {% for r in ns.rows | sort(attribute='date') -%}
+              {% if r.rest -%}
+              | 😴 | {{ '**Rest day**' if r.date == today else '*Rest day*' }} | {{ as_datetime(r.date).strftime('%a %-d %b') }} | | |
+              {% else -%}
+              | {{ '❌' if r.cancelled else ('🔴' if r.today else ('✅' if r.done else '⚪')) }} | {{ '**' ~ r.name ~ '**' if r.today else r.name }} | {{ as_datetime(r.date).strftime('%a %-d %b') }} | {{ r.bivouac or '' }} | {% if r.done and r.video %}[▶]({{ r.video }}){% endif %} |
+              {% endif -%}
+              {% endfor %}
+
+              ✅ done · 🔴 today · ⚪ to come · 😴 rest day · ▶ highlights
+              {% else %}
+              No stages published yet.
+              {% endif %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Last stage
+            icon: mdi:flag-checkered
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.dakar_rally_last_stage' %}
+              {% if has_value(e) %}
+              ## {{ states(e) }} · Dakar {{ state_attr(e, 'season') }}
+
+              {{ as_datetime(state_attr(e, 'date')).strftime('%A %-d %B %Y') }}{% if state_attr(e, 'route') %} · {{ state_attr(e, 'route') }}{% elif state_attr(e, 'bivouac') %} · {{ state_attr(e, 'bivouac') }}{% endif %}
+
+              {% set results = state_attr(e, 'results') or {} %}
+              {% for category, table in results.items() %}
+              {% set label = '' if category == 'ALL' else category ~ ' · ' %}
+              {% if table.stage %}
+              ### {{ label }}Stage
+
+              | Pos | Name | Team | Time | Gap |
+              |:-:|:--|:--|--:|--:|
+              {% for r in table.stage -%}
+              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time or '' }} | {{ r.gap or '' }} |
+              {% endfor %}
+              {% endif %}
+              {% if table.general %}
+              ### {{ label }}General classification
+
+              | Pos | Name | Team | Time | Gap |
+              |:-:|:--|:--|--:|--:|
+              {% for r in table.general -%}
+              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time or '' }} | {{ r.gap or '' }} |
+              {% endfor %}
+              {% endif %}
+              {% endfor %}
+              {% if state_attr(e, 'result_text') %}
+
+              {{ state_attr(e, 'result_text') }}
+              {% endif %}
+              {% if state_attr(e, 'description') %}
+
+              {{ state_attr(e, 'description') }}
+              {% endif %}
+              {% if not results and not state_attr(e, 'result_text') %}
+
+              *TheSportsDB has no results for this stage.*
+              {% endif %}
+              {% if state_attr(e, 'video') %}
+
+              [▶ Stage highlights]({{ state_attr(e, 'video') }})
+              {% endif %}
+              {% else %}
+              No stage has been run yet.
+              {% endif %}
+
+      - type: grid
+        column_span: 3
+        cards:
+          - type: heading
+            heading: Calendar
+            icon: mdi:calendar-month
+          - type: calendar
+            grid_options:
+              columns: full
+            initial_view: listWeek
+            entities:
+              - calendar.dakar_rally_calendar
+  - type: sections
+    max_columns: 4
+    icon: mdi:soccer
+    path: ''
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Prossima Partita
+          - type: custom:calcio-live-team
+            entity: sensor.calciolive_next_ita_1_ac_milan
+            show_event_toasts: true
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: La Classifica
+          - type: custom:calcio-live-classifica
+            entity: sensor.calciolive_classifica_italian_serie_a
+            max_teams_visible: 10
+            hide_header: false
+            selected_group: ''
+            show_event_toasts: false
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Champions League
+            icon: mdi:trophy
+          - type: custom:calcio-live-matches
+            entity: sensor.calciolive_all_uefa_champions_league
+            max_events_visible: 9
+            max_events_total: 50
+            hide_past_days: 0
+            show_finished_matches: true
+            hide_header: false
+            show_event_toasts: false
+      - type: grid
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Classifica Champions
+          - type: custom:calcio-live-classifica
+            entity: sensor.calciolive_classifica_uefa_champions_league
+            max_teams_visible: 12
+            hide_header: false
+            selected_group: ''
+            show_event_toasts: false
+      - type: grid
+        column_span: 2
+        cards:
+          - type: heading
+            heading_style: title
+            heading: Fase a eliminazione diretta
+          - type: custom:calcio-live-bracket
+            entity: sensor.calciolive_bracket_uefa_champions_league
+            style: tree
+            hide_header: false
+            compact: false
+            tree_show_playoffs: true
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# Campionato Serie A Tim'
+    visible:
+      - user: 2f9103779fcc413ba915b1b1d7498317
+    cards: []
+    background:
+      opacity: 33
+      alignment: center
+      size: cover
+      repeat: repeat
+      attachment: fixed
+      image:
+        media_content_id: media-source://image_upload/3d03d6e488c2ca5d8896396384895ab5
+        media_content_type: image/jpeg
+        metadata:
+          title: IMG_1855.jpeg
+          thumbnail: /api/image/serve/3d03d6e488c2ca5d8896396384895ab5/256x256
+          media_class: image
+          navigateIds:
+            - {}
+            - media_content_type: app
+              media_content_id: media-source://image_upload
+  - title: SuperLega
+    path: superlega
+    icon: mdi:volleyball
+    type: sections
+    max_columns: 3
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# SuperLega Volley'
+    visible:
+      - user: 2f9103779fcc413ba915b1b1d7498317
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: SuperLega
+            icon: mdi:volleyball
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.volley_superlega_season' %}
+              {% set status = states(e) %}
+              {% set banner = state_attr(e, 'banner') %}
+              {% set season = state_attr(e, 'season') %}
+              {% set nr = 'sensor.volley_superlega_next_round' %}
+              {% set leader = states('sensor.volley_superlega_standings') %}
+              {% if banner %}<img src="{{ banner }}" width="100%">{% endif %}
+
+              {% if status == 'preseason' %}
+              {% set days = state_attr(e, 'days_to_start') | int(0) %}
+              ## Season {{ season }}
+
+              Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**, on {{ as_datetime(state_attr(e, 'start')).strftime('%A %-d %B') }}:
+              {{ state_attr(e, 'teams') }} teams, {{ state_attr(e, 'total_rounds') }} rounds.
+              {% elif status == 'regular_season' %}
+              ## Round {{ states(nr) if states(nr) not in ['unknown', 'unavailable'] else '-' }} of {{ state_attr(e, 'total_rounds') }}
+
+              {{ state_attr(e, 'rounds_played') }} rounds played{% if leader not in ['unknown', 'unavailable'] %} · leader **{{ leader }}**{% endif %}{% if state_attr(e, 'matches_today') %} · **{{ state_attr(e, 'matches_today') }} match{{ 'es' if state_attr(e, 'matches_today') > 1 else '' }} today**{% endif %}.
+              {% elif status == 'playoffs' %}
+              ## Playoffs
+
+              Regular season won by **{{ leader }}**. {{ states('sensor.volley_superlega_playoffs') }} playoff matches played.
+              {% elif status == 'finished' %}
+              ## Season {{ season }} is over
+
+              Regular season won by **{{ leader }}**.
+              {% else %}
+              ## Waiting for TheSportsDB
+
+              No matches published yet.
+              {% endif %}
+          - type: tile
+            entity: sensor.volley_superlega_next_match
+            name: Next match
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.volley_superlega_last_result
+            name: Last result
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.volley_superlega_match_today
+            name: Match today
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.volley_superlega_match_live
+            name: In progress
+            grid_options:
+              columns: 6
+
+      - type: grid
+        visibility:
+          # The team entities exist only when a favourite team is set.
+          - condition: state
+            entity: binary_sensor.volley_superlega_team_match_today
+            state_not: unknown
+          - condition: state
+            entity: binary_sensor.volley_superlega_team_match_today
+            state_not: unavailable
+        cards:
+          - type: heading
+            heading: My team
+            icon: mdi:heart
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set p = 'sensor.volley_superlega_team_position' %}
+              {% set n = 'sensor.volley_superlega_team_next_match' %}
+              {% set l = 'sensor.volley_superlega_team_last_match' %}
+              {% set n_side = 'home' if state_attr(n, 'home') else 'away' %}
+              {% set l_side = 'home' if state_attr(l, 'home') else 'away' %}
+              {% set badge = state_attr(p, 'badge') or state_attr(n, n_side ~ '_badge') or state_attr(l, l_side ~ '_badge') %}
+              {% set team = state_attr(p, 'team') or state_attr(n, n_side ~ '_team') or state_attr(l, l_side ~ '_team') %}
+              {% if badge %}<img src="{{ badge }}" height="48">{% endif %}
+
+              ## {{ team }}
+
+              {% if states(p) not in ['unknown', 'unavailable'] %}
+              **{{ states(p) }}°** of {{ state_attr(p, 'teams') }} · **{{ state_attr(p, 'points') }} pts** ·
+              {{ state_attr(p, 'won') }}W {{ state_attr(p, 'lost') }}L · sets {{ state_attr(p, 'sets_won') }}-{{ state_attr(p, 'sets_lost') }}
+              {%- if state_attr(p, 'points_behind_leader') %} · {{ state_attr(p, 'points_behind_leader') }} pts behind the leader{% endif %}
+              {% else %}
+              No results yet this season.
+              {% endif %}
+
+              {% if state_attr(n, 'opponent') %}
+              **Next:** {{ 'vs' if state_attr(n, 'home') else 'at' }} {{ state_attr(n, 'opponent') }},
+              {% if state_attr(n, 'start') %}{{ as_timestamp(state_attr(n, 'start')) | timestamp_custom('%A %-d %B, %H:%M') }}{% else %}{{ as_datetime(state_attr(n, 'date')).strftime('%A %-d %B') }}{% endif %}{% if state_attr(n, 'venue') %} · {{ state_attr(n, 'venue') }}{% endif %}
+              {% endif %}
+
+              {% if state_attr(l, 'opponent') %}
+              **Last:** {{ 'won' if state_attr(l, 'outcome') == 'won' else 'lost' }} **{{ states(l) }}** {{ 'vs' if state_attr(l, 'home') else 'at' }} {{ state_attr(l, 'opponent') }}
+              ({{ as_datetime(state_attr(l, 'date')).strftime('%-d %B') }}){% for s in state_attr(l, 'sets') or [] %}{{ ' · ' if loop.first else ', ' }}{{ s.home }}-{{ s.away }}{% endfor %}
+              {% endif %}
+          - type: tile
+            entity: binary_sensor.volley_superlega_team_match_today
+            name: Match today
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.volley_superlega_team_next_match
+            name: Next match
+            grid_options:
+              columns: 6
+
+      - type: grid
+        visibility:
+          - condition: state
+            entity: sensor.volley_superlega_next_round
+            state_not: unknown
+        cards:
+          - type: heading
+            heading: Next round
+            icon: mdi:calendar-arrow-right
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set a = states.sensor.volley_superlega_next_round.attributes %}
+              ### Round {{ a.round }}
+
+              | | | | |
+              |:--|--:|:-:|:--|
+              {% for m in a.matches or [] %}| {% if m.start %}{{ as_timestamp(m.start) | timestamp_custom('%a %-d/%m %H:%M') }}{% else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if m.score else ('🔴' if m.live else '-') }} | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
+              {% endfor %}
+
+      - type: grid
+        visibility:
+          - condition: state
+            entity: sensor.volley_superlega_last_round
+            state_not: unknown
+        cards:
+          - type: heading
+            heading: Last round
+            icon: mdi:calendar-check
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set a = states.sensor.volley_superlega_last_round.attributes %}
+              ### Round {{ a.round }}
+
+              | | | | |
+              |:--|--:|:-:|:--|
+              {% for m in a.matches or [] %}| {{ as_datetime(m.date).strftime('%a %-d/%m') }} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | **{{ m.score or '-' }}** | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
+              {% endfor %}
+
+              {% set sets = (a.matches or []) | selectattr('sets') | list %}
+              {% if sets %}<small>{% for m in sets %}{{ m.home_team }} - {{ m.away_team }}: {{ m.sets | join(', ') }}<br>{% endfor %}</small>{% endif %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Standings
+            icon: mdi:podium
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set rows = state_attr('sensor.volley_superlega_standings', 'standings') or [] %}
+              | # | Team | Pts | P | W-L | Sets | Form |
+              |--:|:--|--:|--:|:-:|:-:|:--|
+              {% for r in rows %}| {{ r.position }} | {% if r.badge %}<img src="{{ r.badge }}" height="18"> {% endif %}{{ r.team }} | **{{ r.points }}** | {{ r.played }} | {{ r.won }}-{{ r.lost }} | {{ r.sets_won }}-{{ r.sets_lost }} | {{ r.form | replace('W', '🟢') | replace('L', '🔴') }} |
+              {% endfor %}
+
+              <small>Computed from the results: 3 points for a 3-0 or 3-1 win, 2 for 3-2, 1 for 2-3. Penalties are not included.</small>
+
+      - type: grid
+        visibility:
+          - condition: state
+            entity: sensor.volley_superlega_season
+            state:
+              - playoffs
+              - finished
+        cards:
+          - type: heading
+            heading: Playoffs
+            icon: mdi:tournament
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set series = state_attr('sensor.volley_superlega_playoffs', 'series') or [] %}
+              {% if not series %}
+              No playoff matches on TheSportsDB yet.
+              {% endif %}
+              {% for s in series %}
+              **{{ s.team_a }} {{ s.wins_a }}-{{ s.wins_b }} {{ s.team_b }}**
+              <small>{% for m in s.matches %}{{ as_datetime(m.date).strftime('%-d/%m') }} {{ m.home_team }} {{ m.score or '-' }} {{ m.away_team }}{{ '' if loop.last else ' · ' }}{% endfor %}</small>
+
+              {% endfor %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Calendar
+            icon: mdi:calendar-month
+          - type: calendar
+            grid_options:
+              columns: full
+            initial_view: listWeek
+            entities:
+              - calendar.volley_superlega_calendar
