@@ -7,7 +7,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.selector import SelectSelector, SelectSelectorConfig, SelectSelectorMode
 from .api import SportsApiClient, SportsApiError, SportsAuthError
-from .competitions import COMPETITIONS, competition_of
+from .competitions import COMPETITIONS, competition_of, uses_api_key
 from .const import CONF_API_KEY, CONF_COMPETITION, DEFAULT_API_KEY, DOMAIN
 
 
@@ -37,6 +37,10 @@ class SportsConfigFlow(ConfigFlow, domain=DOMAIN):
             competition = user_input[CONF_COMPETITION]
             await self.async_set_unique_id(competition)
             self._abort_if_unique_id_configured()
+            if not uses_api_key(COMPETITIONS[competition]):
+                return self.async_create_entry(
+                    title=COMPETITIONS[competition].NAME, data={CONF_COMPETITION: competition}
+                )
             api_key = user_input.get(CONF_API_KEY, "").strip() or DEFAULT_API_KEY
             if not (error := await _validate_key(self.hass, api_key, competition)):
                 return self.async_create_entry(
@@ -97,6 +101,12 @@ class SportsOptionsFlow(OptionsFlow):
         entry = self.config_entry
         competition = competition_of(entry)
         current_key = entry.options.get(CONF_API_KEY) or entry.data.get(CONF_API_KEY) or DEFAULT_API_KEY
+        with_key = uses_api_key(competition)
+        if user_input is not None and not with_key:
+            options = dict(user_input)
+            if clean := getattr(competition, "clean_options", None):
+                options = clean(options)
+            return self.async_create_entry(data=options)
         if user_input is not None:
             api_key = user_input.get(CONF_API_KEY, "").strip() or DEFAULT_API_KEY
             if api_key == current_key or not (
@@ -113,7 +123,7 @@ class SportsOptionsFlow(OptionsFlow):
             data_schema=vol.Schema(
                 {
                     **competition.options_schema(entry),
-                    vol.Optional(CONF_API_KEY, default=current_key): str,
+                    **({vol.Optional(CONF_API_KEY, default=current_key): str} if with_key else {}),
                 }
             ),
             errors=errors,

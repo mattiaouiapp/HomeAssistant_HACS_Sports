@@ -1,12 +1,13 @@
 # MMOUi Sports per Home Assistant
 
-Un'unica integrazione HACS per le competizioni che seguo, con i dati di [TheSportsDB](https://www.thesportsdb.com):
+Un'unica integrazione HACS per le competizioni che seguo, con i dati di [TheSportsDB](https://www.thesportsdb.com) e di [ESPN](https://www.espn.com):
 
-| Competizione | Lega TheSportsDB | Entità | Dashboard |
+| Competizione | Fonte | Entità | Dashboard |
 | --- | --- | --- | --- |
-| **FIA World Endurance Championship** | [4413](https://www.thesportsdb.com/league/4413) | `*.fia_wec_*` | [`dashboards/fia_wec.yaml`](dashboards/fia_wec.yaml) |
-| **Dakar Rally** | [4447](https://www.thesportsdb.com/league/4447) | `*.dakar_rally_*` | [`dashboards/dakar_rally.yaml`](dashboards/dakar_rally.yaml) |
-| **SuperLega** (pallavolo maschile) | [4544](https://www.thesportsdb.com/league/4544) | `*.volley_superlega_*` | [`dashboards/superlega.yaml`](dashboards/superlega.yaml) |
+| **FIA World Endurance Championship** | TheSportsDB, lega [4413](https://www.thesportsdb.com/league/4413) | `*.fia_wec_*` | [`dashboards/fia_wec.yaml`](dashboards/fia_wec.yaml) |
+| **Dakar Rally** | TheSportsDB, lega [4447](https://www.thesportsdb.com/league/4447) | `*.dakar_rally_*` | [`dashboards/dakar_rally.yaml`](dashboards/dakar_rally.yaml) |
+| **SuperLega** (pallavolo maschile) | TheSportsDB, lega [4544](https://www.thesportsdb.com/league/4544) | `*.volley_superlega_*` | [`dashboards/superlega.yaml`](dashboards/superlega.yaml) |
+| **NBA** (basket) | ESPN, nessuna chiave | `*.nba_*` | [`dashboards/nba.yaml`](dashboards/nba.yaml) |
 
 Ogni competizione è una voce separata dell'integrazione, con il suo dispositivo e le sue opzioni. Gli ID delle entità sono fissi e non dipendono dalla lingua di Home Assistant, quindi le dashboard funzionano ovunque. I nomi sono tradotti in italiano e inglese.
 
@@ -47,7 +48,8 @@ Da **Configura** su ogni voce:
 | FIA WEC | Prove e qualifiche nel calendario (altrimenti solo le gare) |
 | Dakar Rally | Giorni di riposo nel calendario |
 | SuperLega | Squadra preferita (aggiunge le entità `*_team_*`), solo la squadra preferita nel calendario |
-| Tutte | Chiave API TheSportsDB |
+| NBA | Squadra preferita (aggiunge le entità `*_team_*` e tutta la sua stagione nel calendario), solo la squadra preferita nel calendario |
+| WEC, Dakar, SuperLega | Chiave API TheSportsDB |
 
 ## Entità
 
@@ -98,18 +100,37 @@ Da **Configura** su ogni voce:
 | `binary_sensor.volley_superlega_team_match_today` | on/off | Quando la squadra gioca oggi |
 | `binary_sensor.volley_superlega_team_match_live` | in corso | Mentre la squadra sta giocando |
 
+### NBA
+
+| Entità | Tipo | Contenuto |
+| --- | --- | --- |
+| `sensor.nba_season` | enum | `preseason`, `regular_season`, `play_in`, `playoffs`, `offseason`. Attributi: stagione, date, partite della notte, partite in corso, logo |
+| `sensor.nba_games_today` | numero | Partite della notte. Attributo `games`: orario, squadre, loghi, record, punteggio e stato in diretta (quarto e cronometro), parziali per quarto, migliori marcatori, reti TV, serie playoff |
+| `sensor.nba_last_results` | numero | L'ultima notte con partite concluse, con gli stessi dettagli |
+| `sensor.nba_next_game` | timestamp | Prossima partita della lega |
+| `sensor.nba_east_standings`, `sensor.nba_west_standings` | testo | La prima della conference. Attributo `standings`: posizione, vittorie e sconfitte, percentuale, partite di distacco, serie, ultime 10, casa, trasferta, punti fatti e subiti |
+| `binary_sensor.nba_game_live` | in corso | Mentre c'è almeno una partita in corso |
+| `calendar.nba_calendar` | calendario | Le partite della settimana e, con la squadra preferita, tutta la sua stagione |
+| `sensor.nba_team_next_game` | timestamp | Prossima partita della squadra preferita, o quella in corso con il punteggio |
+| `sensor.nba_team_last_game` | testo | Ultimo punteggio dal lato della squadra, es. `114-110`; attributo `outcome` (`won`/`lost`) e migliori marcatori |
+| `sensor.nba_team_standing` | numero | Posizione nella conference, vuota prima dell'inizio della regular season |
+| `binary_sensor.nba_team_game_today` | on/off | Quando la squadra gioca nella notte |
+| `binary_sensor.nba_team_game_live` | in corso | Mentre la squadra sta giocando |
+
+Le giornate NBA seguono la data americana (ora di New York), come le conta la NBA: le partite di "martedì" si giocano in Italia nella notte tra martedì e mercoledì. Gli orari nelle entità e nella dashboard sono quelli locali.
+
 ## Dashboard
 
 | File | Contenuto | Richiede |
 | --- | --- | --- |
-| [`fia_wec.yaml`](dashboards/fia_wec.yaml), [`dakar_rally.yaml`](dashboards/dakar_rally.yaml), [`superlega.yaml`](dashboards/superlega.yaml) | Una competizione per dashboard | Solo questa integrazione, card native |
-| [`sport.yaml`](dashboards/sport.yaml) | La mia dashboard completa: F1, WEC, Dakar, Serie A con Champions League, SuperLega | Anche [Calcio Live](https://github.com/Bobsilvio/calcio-live) con le sue card (Serie A, Champions League e il Milan), un'integrazione F1 con entità `sensor.f1_*` e [button-card](https://github.com/custom-cards/button-card) |
+| [`fia_wec.yaml`](dashboards/fia_wec.yaml), [`dakar_rally.yaml`](dashboards/dakar_rally.yaml), [`superlega.yaml`](dashboards/superlega.yaml), [`nba.yaml`](dashboards/nba.yaml) | Una competizione per dashboard | Solo questa integrazione, card native |
+| [`sport.yaml`](dashboards/sport.yaml) | La mia dashboard completa: F1, WEC, Dakar, Serie A con Champions League, SuperLega, NBA | Anche [Calcio Live](https://github.com/Bobsilvio/calcio-live) con le sue card (Serie A, Champions League e il Milan), un'integrazione F1 con entità `sensor.f1_*` e [button-card](https://github.com/custom-cards/button-card) |
 
 Per aggiungerne una: **Impostazioni → Plance → Aggiungi plancia → Nuova plancia da zero**, aprila, menu ⋮ → **Modifica plancia** → menu ⋮ → **Editor di configurazione grezza**, e sostituisci il contenuto con il file.
 
 ### Dashboard completa
 
-[`sport.yaml`](dashboards/sport.yaml) ha cinque viste:
+[`sport.yaml`](dashboards/sport.yaml) ha sei viste:
 
 | Vista | Dati da | Entità principali |
 | --- | --- | --- |
@@ -118,6 +139,7 @@ Per aggiungerne una: **Impostazioni → Plance → Aggiungi plancia → Nuova pl
 | Dakar Rally | MMOUi Sports | `*.dakar_rally_*` |
 | Calcio | [Calcio Live](https://github.com/Bobsilvio/calcio-live) e [Calcio Live Card](https://github.com/Bobsilvio/calcio-live-card) | vedi sotto |
 | SuperLega | MMOUi Sports | `*.volley_superlega_*` |
+| NBA | MMOUi Sports | `*.nba_*` |
 
 La vista calcio mostra il Milan, la classifica di Serie A e la Champions League (partite, classifica della fase campionato, tabellone a eliminazione diretta). In Calcio Live servono tre voci:
 
@@ -132,6 +154,8 @@ La Champions va da TheSportsDB a Calcio Live perché, con la chiave gratuita, Th
 Le viste hanno un'intestazione e sono visibili solo al mio utente (`visible: user`): se usi il file su un altro Home Assistant, togli o cambia quelle righe.
 
 ## Chiave API
+
+Vale solo per WEC, Dakar e SuperLega: l'NBA usa l'API pubblica di ESPN, che non richiede chiavi.
 
 TheSportsDB offre una chiave pubblica gratuita (`3`), già impostata come predefinita. Restituisce al massimo 5 eventi per richiesta, quindi l'integrazione ricostruisce le stagioni a pezzi:
 
@@ -150,14 +174,16 @@ Con una chiave [TheSportsDB Premium](https://www.thesportsdb.com/pricing) ogni s
 | FIA WEC | ogni 6 ore | ogni 30 minuti nel weekend di gara, finché non c'è il risultato |
 | Dakar Rally | ogni 6 ore | ogni 30 minuti dal giorno prima del prologo a due giorni dopo l'arrivo |
 | SuperLega | ogni 6 ore | ogni 10 minuti nei giorni di partita, ogni 2 minuti mentre cerca le partite mancanti |
+| NBA | ogni ora | ogni 15 minuti nelle giornate con partite, ogni minuto da un'ora prima della prima palla a due fino all'ultimo risultato |
 
 Le entità legate all'orario (prossima sessione o partita, in corso, oggi) si aggiornano ogni minuto senza richieste aggiuntive.
 
 ## Limiti
 
-- TheSportsDB non ha dati in tempo reale per nessuna delle tre competizioni: i risultati arrivano a evento concluso e lo stato "in corso" si basa sugli orari.
+- TheSportsDB non ha dati in tempo reale per WEC, Dakar e SuperLega: i risultati arrivano a evento concluso e lo stato "in corso" si basa sugli orari. L'NBA invece, da ESPN, ha punteggi in diretta aggiornati ogni minuto.
 - **WEC**: quando l'orario di una sessione non è noto, TheSportsDB indica mezzanotte UTC e l'evento è "tutto il giorno" (`time_confirmed: false`); la durata delle sessioni è stimata.
 - **Dakar**: niente orari di partenza delle tappe; i risultati sono inseriti a mano su TheSportsDB e spesso mancano.
+- **NBA**: le classifiche sono quelle della regular season anche durante play-in e playoff; il tabellone dei playoff non c'è, ma ogni partita riporta lo stato della serie (es. "NY leads series 3-1"). Le partite della lega coprono da ieri a una settimana avanti; la stagione intera è nel calendario solo per la squadra preferita.
 - **SuperLega**: la classifica è calcolata dai risultati (3 punti per 3-0 e 3-1, 2 per 3-2, 1 per 2-3; a parità vittorie, poi quoziente set), senza penalizzazioni né quoziente punti. TheSportsDB spesso omette il quarto set nei parziali. Le fasi dei playoff non hanno nome, quindi sono mostrate come serie tra due squadre.
 
 ## Esempio di automazione

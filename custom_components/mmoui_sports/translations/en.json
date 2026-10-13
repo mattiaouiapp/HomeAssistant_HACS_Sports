@@ -3,13 +3,13 @@
     "step": {
       "user": {
         "title": "MMOUi Sports",
-        "description": "Pick a competition. Fixtures, results and calendars come from TheSportsDB. The free key `3` works out of the box; a TheSportsDB Premium key loads whole seasons with a single request. Add the integration again for each competition.",
+        "description": "Pick a competition. WEC, Dakar and SuperLega come from TheSportsDB: the free key `3` works out of the box, a TheSportsDB Premium key loads whole seasons with a single request. The NBA comes from ESPN and needs no key (the key field is ignored). Add the integration again for each competition.",
         "data": {
           "competition": "Competition",
           "api_key": "TheSportsDB API key"
         },
         "data_description": {
-          "api_key": "Leave `3` for the free public key, or paste your TheSportsDB Premium key."
+          "api_key": "Leave `3` for the free public key, or paste your TheSportsDB Premium key. Not used for the NBA."
         }
       },
       "reauth_confirm": {
@@ -60,7 +60,8 @@
       "options": {
         "fia_wec": "FIA World Endurance Championship",
         "dakar_rally": "Dakar Rally",
-        "superlega": "SuperLega volleyball"
+        "superlega": "SuperLega volleyball",
+        "nba": "NBA basketball"
       }
     }
   },
@@ -140,6 +141,40 @@
       },
       "team_last_match": {
         "name": "Team last match"
+      },
+      "nba_season": {
+        "name": "Season",
+        "state": {
+          "preseason": "Preseason",
+          "regular_season": "Regular season",
+          "play_in": "Play-in",
+          "playoffs": "Playoffs",
+          "offseason": "Offseason"
+        }
+      },
+      "nba_games_today": {
+        "name": "Games today"
+      },
+      "nba_last_results": {
+        "name": "Last results"
+      },
+      "nba_next_game": {
+        "name": "Next game"
+      },
+      "nba_east_standings": {
+        "name": "Eastern Conference"
+      },
+      "nba_west_standings": {
+        "name": "Western Conference"
+      },
+      "nba_team_next_game": {
+        "name": "Team next game"
+      },
+      "nba_team_last_game": {
+        "name": "Team last game"
+      },
+      "nba_team_standing": {
+        "name": "Team standing"
       }
     },
     "binary_sensor": {
@@ -166,10 +201,22 @@
       },
       "team_match_live": {
         "name": "Team match in progress"
+      },
+      "nba_game_live": {
+        "name": "Game in progress"
+      },
+      "nba_team_game_today": {
+        "name": "Team game today"
+      },
+      "nba_team_game_live": {
+        "name": "Team game in progress"
       }
     },
     "calendar": {
       "calendar": {
+        "name": "Calendar"
+      },
+      "nba_calendar": {
         "name": "Calendar"
       }
     }

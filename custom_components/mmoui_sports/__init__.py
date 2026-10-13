@@ -20,8 +20,11 @@ type SportsConfigEntry = ConfigEntry[DataUpdateCoordinator]
 
 async def async_setup_entry(hass: HomeAssistant, entry: SportsConfigEntry) -> bool:
     competition = competition_of(entry)
-    api_key = entry.options.get(CONF_API_KEY) or entry.data.get(CONF_API_KEY) or DEFAULT_API_KEY
-    client = SportsApiClient(async_get_clientsession(hass), api_key, competition.LEAGUE_ID)
+    if create_client := getattr(competition, "create_client", None):
+        client = create_client(hass, entry)
+    else:
+        api_key = entry.options.get(CONF_API_KEY) or entry.data.get(CONF_API_KEY) or DEFAULT_API_KEY
+        client = SportsApiClient(async_get_clientsession(hass), api_key, competition.LEAGUE_ID)
     coordinator = competition.Coordinator(hass, entry, client)
 
     # A first load on the free key walks the season one round at a time and takes

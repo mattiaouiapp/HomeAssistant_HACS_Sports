@@ -3,16 +3,18 @@ from __future__ import annotations
 DOMAIN = "mmoui_sports"
 NAME = "MMOUi Sports"
 ATTRIBUTION = "Data provided by TheSportsDB"
+ATTRIBUTION_ESPN = "Data provided by ESPN"
 
 CONF_API_KEY = "api_key"
 CONF_COMPETITION = "competition"
 
 # One config entry per competition; the values are also the entity ID prefixes
-# of the WEC and the Dakar.
+# of the WEC, the Dakar and the NBA.
 COMPETITION_WEC = "fia_wec"
 COMPETITION_DAKAR = "dakar_rally"
 COMPETITION_SUPERLEGA = "superlega"
-COMPETITIONS = (COMPETITION_WEC, COMPETITION_DAKAR, COMPETITION_SUPERLEGA)
+COMPETITION_NBA = "nba"
+COMPETITIONS = (COMPETITION_WEC, COMPETITION_DAKAR, COMPETITION_SUPERLEGA, COMPETITION_NBA)
 
 # TheSportsDB public test key. Works for everybody but caps the list
 # endpoints (5 events per request, 1 next/past event).

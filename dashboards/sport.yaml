@@ -1,7 +1,7 @@
 # Personal "Sport" dashboard for Home Assistant (sections views).
 #
 # Views: F1 (sensor.f1_* entities, button-card), FIA WEC, Dakar Rally, Serie A + Champions
-# League (calcio-live), SuperLega volleyball. WEC, Dakar and SuperLega use the
+# League (calcio-live), SuperLega volleyball, NBA. WEC, Dakar, SuperLega and NBA use the
 # MMOUi Sports integration (this repository);
 # football uses the Calcio Live integration and cards (Bobsilvio/calcio-live).
 #
@@ -2146,3 +2146,200 @@ views:
             initial_view: listWeek
             entities:
               - calendar.volley_superlega_calendar
+  - title: NBA
+    path: nba
+    icon: mdi:basketball
+    type: sections
+    max_columns: 3
+    header:
+      card:
+        type: markdown
+        text_only: true
+        content: '# NBA'
+    visible:
+      - user: 2f9103779fcc413ba915b1b1d7498317
+    sections:
+      - type: grid
+        cards:
+          - type: heading
+            heading: Panoramica
+            icon: mdi:basketball
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.nba_season' %}
+              {% set status = states(e) %}
+              {% set today = states('sensor.nba_games_today') | int(0) %}
+              {% set live = state_attr(e, 'live_games') | int(0) %}
+              <img src="{{ state_attr(e, 'logo') }}" height="56">
+
+              {% if status == 'preseason' %}
+              ## Precampionato {{ state_attr(e, 'season') }}
+              {% elif status == 'regular_season' %}
+              ## Regular season {{ state_attr(e, 'season') }}
+              {% elif status == 'play_in' %}
+              ## Play-in {{ state_attr(e, 'season') }}
+              {% elif status == 'playoffs' %}
+              ## Playoff {{ state_attr(e, 'season') }}
+              {% else %}
+              ## NBA fuori stagione
+              {% endif %}
+
+              {% if live %}🔴 **{{ live }} partit{{ 'a' if live == 1 else 'e' }} in corso** · {% endif %}{% if today %}**{{ today }}** partit{{ 'a' if today == 1 else 'e' }} nella notte{% else %}Nessuna partita in programma stanotte{% endif %}
+              {%- if states('sensor.nba_east_standings') not in ['unknown', 'unavailable'] %} · in testa **{{ state_attr('sensor.nba_east_standings', 'standings')[0].abbreviation }}** a Est e **{{ state_attr('sensor.nba_west_standings', 'standings')[0].abbreviation }}** a Ovest{% endif %}.
+          - type: tile
+            entity: sensor.nba_next_game
+            name: Prossima partita
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.nba_game_live
+            name: In corso
+            grid_options:
+              columns: 6
+
+      - type: grid
+        visibility:
+          # The team entities exist only when a favourite team is set.
+          - condition: state
+            entity: binary_sensor.nba_team_game_today
+            state_not: unknown
+          - condition: state
+            entity: binary_sensor.nba_team_game_today
+            state_not: unavailable
+        cards:
+          - type: heading
+            heading: La mia squadra
+            icon: mdi:heart
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set giorni = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'] %}
+              {% set mesi = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'] %}
+              {% set p = 'sensor.nba_team_standing' %}
+              {% set n = 'sensor.nba_team_next_game' %}
+              {% set l = 'sensor.nba_team_last_game' %}
+              {% set logo = state_attr(p, 'logo') or state_attr(n, 'team_logo') or state_attr(l, 'team_logo') %}
+              {% if logo %}<img src="{{ logo }}" height="56">{% endif %}
+
+              ## {{ state_attr(p, 'team') or state_attr(n, 'team') or state_attr(l, 'team') }}
+
+              {% if states(p) not in ['unknown', 'unavailable'] %}
+              **{{ states(p) }}°** nella {{ 'Eastern' if state_attr(p, 'conference_name') == 'east' else 'Western' }} Conference · **{{ state_attr(p, 'record') }}** ({{ state_attr(p, 'win_percent') }}) · serie {{ state_attr(p, 'streak') }} · ultime 10 {{ state_attr(p, 'last_ten') }}
+              {% else %}
+              Regular season non ancora iniziata.
+              {% endif %}
+
+              {% if state_attr(n, 'live') %}
+              🔴 **In corso: {{ state_attr(n, 'title') }}** · {{ state_attr(n, 'status') }}
+              {% elif state_attr(n, 'opponent') %}
+              **Prossima:** {{ 'contro' if state_attr(n, 'home') else 'in casa di' }} {{ state_attr(n, 'opponent') }},
+              {% set t = as_timestamp(states(n)) %}{{ giorni[t | timestamp_custom('%w') | int] }} {{ t | timestamp_custom('%-d') }} {{ mesi[t | timestamp_custom('%m') | int - 1] }}, {{ t | timestamp_custom('%H:%M') }}{% if state_attr(n, 'broadcasts') %} · TV {{ state_attr(n, 'broadcasts') | join(', ') }}{% endif %}{% if state_attr(n, 'series') %} · {{ state_attr(n, 'series') }}{% endif %}
+              {% endif %}
+
+              {% if state_attr(l, 'opponent') %}
+              **Ultima:** {{ 'vinta' if state_attr(l, 'outcome') == 'won' else 'persa' }} **{{ states(l) }}** {{ 'contro' if state_attr(l, 'home') else 'in casa di' }} {{ state_attr(l, 'opponent') }}
+              {% set t = as_timestamp(state_attr(l, 'start')) %}({{ t | timestamp_custom('%-d') }} {{ mesi[t | timestamp_custom('%m') | int - 1] }}){% set lead = state_attr(l, 'home_leader') if state_attr(l, 'home') else state_attr(l, 'away_leader') %}{% if lead %} · {{ lead.player }} {{ lead.points }} punti{% endif %}
+              {% endif %}
+          - type: tile
+            entity: binary_sensor.nba_team_game_today
+            name: Gioca stanotte
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.nba_team_next_game
+            name: Prossima partita
+            grid_options:
+              columns: 6
+
+      - type: grid
+        visibility:
+          - condition: numeric_state
+            entity: sensor.nba_games_today
+            above: 0
+        cards:
+          - type: heading
+            heading: Stanotte
+            icon: mdi:weather-night
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              | | | | | |
+              |:--|--:|:-:|:--|:--|
+              {% for g in state_attr('sensor.nba_games_today', 'games') or [] %}| {{ as_timestamp(g.start) | timestamp_custom('%H:%M') }} | {{ g.away_abbreviation }} {% if g.away_logo %}<img src="{{ g.away_logo }}" height="20">{% endif %} | {% if g.live %}🔴 **{{ g.away_score }}-{{ g.home_score }}**<br><small>{{ g.status }}</small>{% elif g.final %}**{{ g.away_score }}-{{ g.home_score }}**{% else %}@{% endif %} | {% if g.home_logo %}<img src="{{ g.home_logo }}" height="20">{% endif %} {{ g.home_abbreviation }} | <small>{{ g.broadcasts | join(', ') }}{% if g.series %}<br>{{ g.series }}{% endif %}</small> |
+              {% endfor %}
+
+      - type: grid
+        visibility:
+          - condition: numeric_state
+            entity: sensor.nba_last_results
+            above: 0
+        cards:
+          - type: heading
+            heading: Ultimi risultati
+            icon: mdi:scoreboard
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set giorni = ['domenica', 'lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato'] %}
+              {% set mesi = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'] %}
+              {% set a = states.sensor.nba_last_results.attributes %}
+              {% set d = as_datetime(a.game_day) %}
+              ### Notte di {{ giorni[d.strftime('%w') | int] }} {{ d.day }} {{ mesi[d.month - 1] }}
+
+              <small>Data americana: in Italia le partite sono finite la mattina dopo.</small>
+
+              | | | | |
+              |--:|:-:|:--|:--|
+              {% for g in a.games or [] %}| {{ g.away_abbreviation }} {% if g.away_logo %}<img src="{{ g.away_logo }}" height="20">{% endif %} | **{{ g.away_score }}-{{ g.home_score }}** | {% if g.home_logo %}<img src="{{ g.home_logo }}" height="20">{% endif %} {{ g.home_abbreviation }} | <small>{% set w = g.home_leader if g.home_score > g.away_score else g.away_leader %}{% if w %}{{ w.player }} {{ w.points }}{% endif %}{% if g.series %}<br>{{ g.series }}{% endif %}</small> |
+              {% endfor %}
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Eastern Conference
+            icon: mdi:podium
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set rows = state_attr('sensor.nba_east_standings', 'standings') or [] %}
+              | # | Squadra | V-P | % | GB | Serie | U10 |
+              |--:|:--|:-:|--:|--:|:-:|:-:|
+              {% for r in rows %}| {{ r.position }} | <img src="{{ r.logo }}" height="18"> {{ r.abbreviation }} | **{{ r.wins }}-{{ r.losses }}** | {{ r.win_percent }} | {{ r.games_behind }} | {{ r.streak }} | {{ r.last_ten or '-' }} |
+              {% endfor %}
+
+              <small>1-6 playoff, 7-10 play-in.</small>
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Western Conference
+            icon: mdi:podium
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set rows = state_attr('sensor.nba_west_standings', 'standings') or [] %}
+              | # | Squadra | V-P | % | GB | Serie | U10 |
+              |--:|:--|:-:|--:|--:|:-:|:-:|
+              {% for r in rows %}| {{ r.position }} | <img src="{{ r.logo }}" height="18"> {{ r.abbreviation }} | **{{ r.wins }}-{{ r.losses }}** | {{ r.win_percent }} | {{ r.games_behind }} | {{ r.streak }} | {{ r.last_ten or '-' }} |
+              {% endfor %}
+
+              <small>1-6 playoff, 7-10 play-in.</small>
+
+      - type: grid
+        cards:
+          - type: heading
+            heading: Calendario
+            icon: mdi:calendar-month
+          - type: calendar
+            grid_options:
+              columns: full
+            initial_view: listWeek
+            entities:
+              - calendar.nba_calendar
