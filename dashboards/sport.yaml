@@ -1611,45 +1611,83 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set e = 'sensor.dakar_rally_rally_status' %}
+
               {% set status = states(e) %}
+
               {% set season = state_attr(e, 'season') %}
+
               {% set banner = state_attr(e, 'banner') %}
+
               {% set start = state_attr(e, 'start') %}
+
               {% set finish = state_attr(e, 'end') %}
+
               {% set total = state_attr(e, 'total_stages') %}
+
               {% set done = state_attr(e, 'stages_completed') %}
+
               {% if banner %}<img src="{{ banner }}" width="100%">{% endif %}
 
+
               {% if status == 'upcoming' %}
+
               {% set days = state_attr(e, 'days_to_start') | int(0) %}
+
               ## Dakar {{ season }}
 
+
               Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**:
-              {{ as_datetime(start).strftime('%-d %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }},
+
+              {{ as_datetime(start).strftime('%-d %B') }} to {{
+              as_datetime(finish).strftime('%-d %B %Y') }},
+
               a prologue and {{ total }} stages.
+
               {% elif status == 'racing' %}
+
               ## {{ state_attr(e, 'current_stage') }} today
 
+
               Bivouac **{{ state_attr(e, 'bivouac') or 'unknown' }}** ·
+
               {{ done }} of {{ total }} stages completed ·
+
               finish in {{ state_attr(e, 'days_to_finish') }} days.
+
               {% elif status == 'rest_day' %}
+
               ## Rest day
 
+
               {{ done }} of {{ total }} stages completed.
-              Racing resumes with **{{ state_attr('sensor.dakar_rally_next_stage', 'name') }}**
-              {% if state_attr('sensor.dakar_rally_next_stage', 'days_until') == 1 %}tomorrow{% else %}on {{ as_datetime(states('sensor.dakar_rally_next_stage')).strftime('%A %-d %B') }}{% endif %}.
+
+              Racing resumes with **{{
+              state_attr('sensor.dakar_rally_next_stage', 'name') }}**
+
+              {% if state_attr('sensor.dakar_rally_next_stage', 'days_until') ==
+              1 %}tomorrow{% else %}on {{
+              as_datetime(states('sensor.dakar_rally_next_stage')).strftime('%A
+              %-d %B') }}{% endif %}.
+
               {% elif status == 'finished' %}
+
               ## Dakar {{ season }} is over
 
-              {{ total }} stages run, from {{ as_datetime(start).strftime('%-d %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }}.
+
+              {{ total }} stages run, from {{ as_datetime(start).strftime('%-d
+              %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }}.
+
               The next edition appears here as soon as TheSportsDB publishes it.
+
               {% else %}
+
               ## Dakar Rally
 
+
               Waiting for data from TheSportsDB.
+
               {% endif %}
           - type: tile
             entity: sensor.dakar_rally_rally_status
@@ -1671,7 +1709,6 @@ views:
             name: In progress
             grid_options:
               columns: 6
-
       - type: grid
         cards:
           - type: heading
@@ -1680,27 +1717,39 @@ views:
             visibility:
               - condition: state
                 entity: binary_sensor.dakar_rally_stage_today
-                state: "on"
+                state: 'on'
           - type: markdown
             visibility:
               - condition: state
                 entity: binary_sensor.dakar_rally_stage_today
-                state: "on"
-            content: |-
+                state: 'on'
+            content: >-
               {% set e = 'sensor.dakar_rally_current_stage' %}
+
               ## {{ states(e) }}
 
-              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e, 'route') }}<br>{% endif %}
-              **Bivouac:** {{ state_attr(e, 'bivouac') or 'unknown' }}{% if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{% endif %}
+
+              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e,
+              'route') }}<br>{% endif %}
+
+              **Bivouac:** {{ state_attr(e, 'bivouac') or 'unknown' }}{% if
+              state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{%
+              endif %}
+
               {% if state_attr(e, 'marathon') %}
 
-              🔧 **Marathon stage:** no outside assistance at the bivouac tonight.
+
+              🔧 **Marathon stage:** no outside assistance at the bivouac
+              tonight.
+
               {% endif %}
+
               {% if state_attr(e, 'video') %}
 
-              [▶ Stage highlights]({{ state_attr(e, 'video') }})
-              {% endif %}
 
+              [▶ Stage highlights]({{ state_attr(e, 'video') }})
+
+              {% endif %}
           - type: heading
             heading: Next stage
             icon: mdi:map-marker-path
@@ -1708,25 +1757,40 @@ views:
             entity: sensor.dakar_rally_next_stage
             name: Next stage
           - type: markdown
-            content: |-
+            content: >-
               {% set e = 'sensor.dakar_rally_next_stage' %}
+
               {% if has_value(e) %}
+
               {% set days = state_attr(e, 'days_until') | int(0) %}
+
               ## {{ state_attr(e, 'name') }}
 
+
               {{ as_datetime(states(e)).strftime('%A %-d %B %Y') }} ·
+
               {% if days == 1 %}tomorrow{% else %}in {{ days }} days{% endif %}
 
-              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e, 'route') }}<br>{% endif %}
-              **Bivouac:** {{ state_attr(e, 'bivouac') or 'to be announced' }}{% if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{% endif %}
+
+              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e,
+              'route') }}<br>{% endif %}
+
+              **Bivouac:** {{ state_attr(e, 'bivouac') or 'to be announced' }}{%
+              if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{%
+              endif %}
+
               {% if state_attr(e, 'marathon') %}
 
+
               🔧 **Marathon stage:** no outside assistance at the bivouac.
-              {% endif %}
-              {% else %}
-              No upcoming stage published yet.
+
               {% endif %}
 
+              {% else %}
+
+              No upcoming stage published yet.
+
+              {% endif %}
       - type: grid
         cards:
           - type: heading
@@ -1735,34 +1799,62 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set e = 'sensor.dakar_rally_stages_completed' %}
+
               {% set ns = namespace(rows=[]) %}
+
               {% for s in state_attr(e, 'stages') or [] %}
+
               {% set ns.rows = ns.rows + [s] %}
+
               {% endfor %}
+
               {% for d in state_attr(e, 'rest_days') or [] %}
+
               {% set ns.rows = ns.rows + [{'date': d, 'rest': true}] %}
+
               {% endfor %}
+
               {% set today = now().date() | string %}
+
               {% if ns.rows %}
-              **Dakar {{ state_attr(e, 'season') }}** · {{ states(e) }} of {{ state_attr(e, 'total_stages') }} stages completed
+
+              **Dakar {{ state_attr(e, 'season') }}** · {{ states(e) }} of {{
+              state_attr(e, 'total_stages') }} stages completed
+
 
               | | Stage | Date | Bivouac | |
+
               |:-:|:--|:--|:--|:-:|
+
               {% for r in ns.rows | sort(attribute='date') -%}
+
               {% if r.rest -%}
-              | 😴 | {{ '**Rest day**' if r.date == today else '*Rest day*' }} | {{ as_datetime(r.date).strftime('%a %-d %b') }} | | |
+
+              | 😴 | {{ '**Rest day**' if r.date == today else '*Rest day*' }} |
+              {{ as_datetime(r.date).strftime('%a %-d %b') }} | | |
+
               {% else -%}
-              | {{ '❌' if r.cancelled else ('🔴' if r.today else ('✅' if r.done else '⚪')) }} | {{ '**' ~ r.name ~ '**' if r.today else r.name }} | {{ as_datetime(r.date).strftime('%a %-d %b') }} | {{ r.bivouac or '' }} | {% if r.done and r.video %}[▶]({{ r.video }}){% endif %} |
+
+              | {{ '❌' if r.cancelled else ('🔴' if r.today else ('✅' if r.done
+              else '⚪')) }} | {{ '**' ~ r.name ~ '**' if r.today else r.name }}
+              | {{ as_datetime(r.date).strftime('%a %-d %b') }} | {{ r.bivouac
+              or '' }} | {% if r.done and r.video %}[▶]({{ r.video }}){% endif
+              %} |
+
               {% endif -%}
+
               {% endfor %}
 
-              ✅ done · 🔴 today · ⚪ to come · 😴 rest day · ▶ highlights
-              {% else %}
-              No stages published yet.
-              {% endif %}
 
+              ✅ done · 🔴 today · ⚪ to come · 😴 rest day · ▶ highlights
+
+              {% else %}
+
+              No stages published yet.
+
+              {% endif %}
       - type: grid
         cards:
           - type: heading
@@ -1771,55 +1863,97 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set e = 'sensor.dakar_rally_last_stage' %}
+
               {% if has_value(e) %}
+
               ## {{ states(e) }} · Dakar {{ state_attr(e, 'season') }}
 
-              {{ as_datetime(state_attr(e, 'date')).strftime('%A %-d %B %Y') }}{% if state_attr(e, 'route') %} · {{ state_attr(e, 'route') }}{% elif state_attr(e, 'bivouac') %} · {{ state_attr(e, 'bivouac') }}{% endif %}
+
+              {{ as_datetime(state_attr(e, 'date')).strftime('%A %-d %B %Y')
+              }}{% if state_attr(e, 'route') %} · {{ state_attr(e, 'route') }}{%
+              elif state_attr(e, 'bivouac') %} · {{ state_attr(e, 'bivouac')
+              }}{% endif %}
+
 
               {% set results = state_attr(e, 'results') or {} %}
+
               {% for category, table in results.items() %}
+
               {% set label = '' if category == 'ALL' else category ~ ' · ' %}
+
               {% if table.stage %}
+
               ### {{ label }}Stage
 
+
               | Pos | Name | Team | Time | Gap |
+
               |:-:|:--|:--|--:|--:|
+
               {% for r in table.stage -%}
-              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time or '' }} | {{ r.gap or '' }} |
+
+              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time
+              or '' }} | {{ r.gap or '' }} |
+
               {% endfor %}
+
               {% endif %}
+
               {% if table.general %}
+
               ### {{ label }}General classification
 
+
               | Pos | Name | Team | Time | Gap |
+
               |:-:|:--|:--|--:|--:|
+
               {% for r in table.general -%}
-              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time or '' }} | {{ r.gap or '' }} |
+
+              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time
+              or '' }} | {{ r.gap or '' }} |
+
               {% endfor %}
+
               {% endif %}
+
               {% endfor %}
+
               {% if state_attr(e, 'result_text') %}
 
+
               {{ state_attr(e, 'result_text') }}
+
               {% endif %}
+
               {% if state_attr(e, 'description') %}
 
+
               {{ state_attr(e, 'description') }}
+
               {% endif %}
+
               {% if not results and not state_attr(e, 'result_text') %}
 
+
               *TheSportsDB has no results for this stage.*
+
               {% endif %}
+
               {% if state_attr(e, 'video') %}
 
+
               [▶ Stage highlights]({{ state_attr(e, 'video') }})
-              {% endif %}
-              {% else %}
-              No stage has been run yet.
+
               {% endif %}
 
+              {% else %}
+
+              No stage has been run yet.
+
+              {% endif %}
       - type: grid
         column_span: 3
         cards:
@@ -1864,7 +1998,7 @@ views:
             icon: mdi:trophy
           - type: custom:calcio-live-matches
             entity: sensor.calciolive_all_uefa_champions_league
-            max_events_visible: 9
+            max_events_visible: 8
             max_events_total: 50
             hide_past_days: 0
             show_finished_matches: true
@@ -1881,23 +2015,11 @@ views:
             hide_header: false
             selected_group: ''
             show_event_toasts: false
-      - type: grid
-        column_span: 2
-        cards:
-          - type: heading
-            heading_style: title
-            heading: Fase a eliminazione diretta
-          - type: custom:calcio-live-bracket
-            entity: sensor.calciolive_bracket_uefa_champions_league
-            style: tree
-            hide_header: false
-            compact: false
-            tree_show_playoffs: true
     header:
       card:
         type: markdown
         text_only: true
-        content: '# Campionato Serie A Tim'
+        content: '# Calcio (Serie A TIM & Champions League)'
     visible:
       - user: 2f9103779fcc413ba915b1b1d7498317
     cards: []
@@ -1939,37 +2061,70 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set e = 'sensor.volley_superlega_season' %}
+
               {% set status = states(e) %}
+
               {% set banner = state_attr(e, 'banner') %}
+
               {% set season = state_attr(e, 'season') %}
+
               {% set nr = 'sensor.volley_superlega_next_round' %}
+
               {% set leader = states('sensor.volley_superlega_standings') %}
+
               {% if banner %}<img src="{{ banner }}" width="100%">{% endif %}
 
+
               {% if status == 'preseason' %}
+
               {% set days = state_attr(e, 'days_to_start') | int(0) %}
+
               ## Season {{ season }}
 
-              Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**, on {{ as_datetime(state_attr(e, 'start')).strftime('%A %-d %B') }}:
-              {{ state_attr(e, 'teams') }} teams, {{ state_attr(e, 'total_rounds') }} rounds.
-              {% elif status == 'regular_season' %}
-              ## Round {{ states(nr) if states(nr) not in ['unknown', 'unavailable'] else '-' }} of {{ state_attr(e, 'total_rounds') }}
 
-              {{ state_attr(e, 'rounds_played') }} rounds played{% if leader not in ['unknown', 'unavailable'] %} · leader **{{ leader }}**{% endif %}{% if state_attr(e, 'matches_today') %} · **{{ state_attr(e, 'matches_today') }} match{{ 'es' if state_attr(e, 'matches_today') > 1 else '' }} today**{% endif %}.
+              Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**, on {{
+              as_datetime(state_attr(e, 'start')).strftime('%A %-d %B') }}:
+
+              {{ state_attr(e, 'teams') }} teams, {{ state_attr(e,
+              'total_rounds') }} rounds.
+
+              {% elif status == 'regular_season' %}
+
+              ## Round {{ states(nr) if states(nr) not in ['unknown',
+              'unavailable'] else '-' }} of {{ state_attr(e, 'total_rounds') }}
+
+
+              {{ state_attr(e, 'rounds_played') }} rounds played{% if leader not
+              in ['unknown', 'unavailable'] %} · leader **{{ leader }}**{% endif
+              %}{% if state_attr(e, 'matches_today') %} · **{{ state_attr(e,
+              'matches_today') }} match{{ 'es' if state_attr(e, 'matches_today')
+              > 1 else '' }} today**{% endif %}.
+
               {% elif status == 'playoffs' %}
+
               ## Playoffs
 
-              Regular season won by **{{ leader }}**. {{ states('sensor.volley_superlega_playoffs') }} playoff matches played.
+
+              Regular season won by **{{ leader }}**. {{
+              states('sensor.volley_superlega_playoffs') }} playoff matches
+              played.
+
               {% elif status == 'finished' %}
+
               ## Season {{ season }} is over
 
+
               Regular season won by **{{ leader }}**.
+
               {% else %}
+
               ## Waiting for TheSportsDB
 
+
               No matches published yet.
+
               {% endif %}
           - type: tile
             entity: sensor.volley_superlega_next_match
@@ -1991,10 +2146,8 @@ views:
             name: In progress
             grid_options:
               columns: 6
-
       - type: grid
         visibility:
-          # The team entities exist only when a favourite team is set.
           - condition: state
             entity: binary_sensor.volley_superlega_team_match_today
             state_not: unknown
@@ -2008,34 +2161,71 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set p = 'sensor.volley_superlega_team_position' %}
+
               {% set n = 'sensor.volley_superlega_team_next_match' %}
+
               {% set l = 'sensor.volley_superlega_team_last_match' %}
+
               {% set n_side = 'home' if state_attr(n, 'home') else 'away' %}
+
               {% set l_side = 'home' if state_attr(l, 'home') else 'away' %}
-              {% set badge = state_attr(p, 'badge') or state_attr(n, n_side ~ '_badge') or state_attr(l, l_side ~ '_badge') %}
-              {% set team = state_attr(p, 'team') or state_attr(n, n_side ~ '_team') or state_attr(l, l_side ~ '_team') %}
+
+              {% set badge = state_attr(p, 'badge') or state_attr(n, n_side ~
+              '_badge') or state_attr(l, l_side ~ '_badge') %}
+
+              {% set team = state_attr(p, 'team') or state_attr(n, n_side ~
+              '_team') or state_attr(l, l_side ~ '_team') %}
+
               {% if badge %}<img src="{{ badge }}" height="48">{% endif %}
+
 
               ## {{ team }}
 
+
               {% if states(p) not in ['unknown', 'unavailable'] %}
-              **{{ states(p) }}°** of {{ state_attr(p, 'teams') }} · **{{ state_attr(p, 'points') }} pts** ·
-              {{ state_attr(p, 'won') }}W {{ state_attr(p, 'lost') }}L · sets {{ state_attr(p, 'sets_won') }}-{{ state_attr(p, 'sets_lost') }}
-              {%- if state_attr(p, 'points_behind_leader') %} · {{ state_attr(p, 'points_behind_leader') }} pts behind the leader{% endif %}
+
+              **{{ states(p) }}°** of {{ state_attr(p, 'teams') }} · **{{
+              state_attr(p, 'points') }} pts** ·
+
+              {{ state_attr(p, 'won') }}W {{ state_attr(p, 'lost') }}L · sets {{
+              state_attr(p, 'sets_won') }}-{{ state_attr(p, 'sets_lost') }}
+
+              {%- if state_attr(p, 'points_behind_leader') %} · {{ state_attr(p,
+              'points_behind_leader') }} pts behind the leader{% endif %}
+
               {% else %}
+
               No results yet this season.
+
               {% endif %}
+
 
               {% if state_attr(n, 'opponent') %}
-              **Next:** {{ 'vs' if state_attr(n, 'home') else 'at' }} {{ state_attr(n, 'opponent') }},
-              {% if state_attr(n, 'start') %}{{ as_timestamp(state_attr(n, 'start')) | timestamp_custom('%A %-d %B, %H:%M') }}{% else %}{{ as_datetime(state_attr(n, 'date')).strftime('%A %-d %B') }}{% endif %}{% if state_attr(n, 'venue') %} · {{ state_attr(n, 'venue') }}{% endif %}
+
+              **Next:** {{ 'vs' if state_attr(n, 'home') else 'at' }} {{
+              state_attr(n, 'opponent') }},
+
+              {% if state_attr(n, 'start') %}{{ as_timestamp(state_attr(n,
+              'start')) | timestamp_custom('%A %-d %B, %H:%M') }}{% else %}{{
+              as_datetime(state_attr(n, 'date')).strftime('%A %-d %B') }}{%
+              endif %}{% if state_attr(n, 'venue') %} · {{ state_attr(n,
+              'venue') }}{% endif %}
+
               {% endif %}
 
+
               {% if state_attr(l, 'opponent') %}
-              **Last:** {{ 'won' if state_attr(l, 'outcome') == 'won' else 'lost' }} **{{ states(l) }}** {{ 'vs' if state_attr(l, 'home') else 'at' }} {{ state_attr(l, 'opponent') }}
-              ({{ as_datetime(state_attr(l, 'date')).strftime('%-d %B') }}){% for s in state_attr(l, 'sets') or [] %}{{ ' · ' if loop.first else ', ' }}{{ s.home }}-{{ s.away }}{% endfor %}
+
+              **Last:** {{ 'won' if state_attr(l, 'outcome') == 'won' else
+              'lost' }} **{{ states(l) }}** {{ 'vs' if state_attr(l, 'home')
+              else 'at' }} {{ state_attr(l, 'opponent') }}
+
+              ({{ as_datetime(state_attr(l, 'date')).strftime('%-d %B') }}){%
+              for s in state_attr(l, 'sets') or [] %}{{ ' · ' if loop.first else
+              ', ' }}{{ s.home }}-{{ s.away }}{% endfor %}
+
               {% endif %}
           - type: tile
             entity: binary_sensor.volley_superlega_team_match_today
@@ -2047,7 +2237,6 @@ views:
             name: Next match
             grid_options:
               columns: 6
-
       - type: grid
         visibility:
           - condition: state
@@ -2060,15 +2249,26 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set a = states.sensor.volley_superlega_next_round.attributes %}
+
               ### Round {{ a.round }}
 
-              | | | | |
-              |:--|--:|:-:|:--|
-              {% for m in a.matches or [] %}| {% if m.start %}{{ as_timestamp(m.start) | timestamp_custom('%a %-d/%m %H:%M') }}{% else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if m.score else ('🔴' if m.live else '-') }} | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
-              {% endfor %}
 
+              | | | | |
+
+              |:--|--:|:-:|:--|
+
+              {% for m in a.matches or [] %}| {% if m.start %}{{
+              as_timestamp(m.start) | timestamp_custom('%a %-d/%m %H:%M') }}{%
+              else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %}
+              | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge
+              }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if
+              m.score else ('🔴' if m.live else '-') }} | {% if m.away_badge
+              %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{
+              m.away_team }} |
+
+              {% endfor %}
       - type: grid
         visibility:
           - condition: state
@@ -2081,18 +2281,31 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
+            content: >-
               {% set a = states.sensor.volley_superlega_last_round.attributes %}
+
               ### Round {{ a.round }}
 
+
               | | | | |
+
               |:--|--:|:-:|:--|
-              {% for m in a.matches or [] %}| {{ as_datetime(m.date).strftime('%a %-d/%m') }} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | **{{ m.score or '-' }}** | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
+
+              {% for m in a.matches or [] %}| {{
+              as_datetime(m.date).strftime('%a %-d/%m') }} | {{ m.home_team }}
+              {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{%
+              endif %} | **{{ m.score or '-' }}** | {% if m.away_badge %}<img
+              src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }}
+              |
+
               {% endfor %}
 
-              {% set sets = (a.matches or []) | selectattr('sets') | list %}
-              {% if sets %}<small>{% for m in sets %}{{ m.home_team }} - {{ m.away_team }}: {{ m.sets | join(', ') }}<br>{% endfor %}</small>{% endif %}
 
+              {% set sets = (a.matches or []) | selectattr('sets') | list %}
+
+              {% if sets %}<small>{% for m in sets %}{{ m.home_team }} - {{
+              m.away_team }}: {{ m.sets | join(', ') }}<br>{% endfor
+              %}</small>{% endif %}
       - type: grid
         cards:
           - type: heading
@@ -2101,15 +2314,25 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
-              {% set rows = state_attr('sensor.volley_superlega_standings', 'standings') or [] %}
+            content: >-
+              {% set rows = state_attr('sensor.volley_superlega_standings',
+              'standings') or [] %}
+
               | # | Team | Pts | P | W-L | Sets | Form |
+
               |--:|:--|--:|--:|:-:|:-:|:--|
-              {% for r in rows %}| {{ r.position }} | {% if r.badge %}<img src="{{ r.badge }}" height="18"> {% endif %}{{ r.team }} | **{{ r.points }}** | {{ r.played }} | {{ r.won }}-{{ r.lost }} | {{ r.sets_won }}-{{ r.sets_lost }} | {{ r.form | replace('W', '🟢') | replace('L', '🔴') }} |
+
+              {% for r in rows %}| {{ r.position }} | {% if r.badge %}<img
+              src="{{ r.badge }}" height="18"> {% endif %}{{ r.team }} | **{{
+              r.points }}** | {{ r.played }} | {{ r.won }}-{{ r.lost }} | {{
+              r.sets_won }}-{{ r.sets_lost }} | {{ r.form | replace('W', '🟢') |
+              replace('L', '🔴') }} |
+
               {% endfor %}
 
-              <small>Computed from the results: 3 points for a 3-0 or 3-1 win, 2 for 3-2, 1 for 2-3. Penalties are not included.</small>
 
+              <small>Computed from the results: 3 points for a 3-0 or 3-1 win, 2
+              for 3-2, 1 for 2-3. Penalties are not included.</small>
       - type: grid
         visibility:
           - condition: state
@@ -2124,17 +2347,27 @@ views:
           - type: markdown
             grid_options:
               columns: full
-            content: |-
-              {% set series = state_attr('sensor.volley_superlega_playoffs', 'series') or [] %}
+            content: >-
+              {% set series = state_attr('sensor.volley_superlega_playoffs',
+              'series') or [] %}
+
               {% if not series %}
+
               No playoff matches on TheSportsDB yet.
+
               {% endif %}
+
               {% for s in series %}
+
               **{{ s.team_a }} {{ s.wins_a }}-{{ s.wins_b }} {{ s.team_b }}**
-              <small>{% for m in s.matches %}{{ as_datetime(m.date).strftime('%-d/%m') }} {{ m.home_team }} {{ m.score or '-' }} {{ m.away_team }}{{ '' if loop.last else ' · ' }}{% endfor %}</small>
+
+              <small>{% for m in s.matches %}{{
+              as_datetime(m.date).strftime('%-d/%m') }} {{ m.home_team }} {{
+              m.score or '-' }} {{ m.away_team }}{{ '' if loop.last else ' · '
+              }}{% endfor %}</small>
+
 
               {% endfor %}
-
       - type: grid
         cards:
           - type: heading
