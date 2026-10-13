@@ -1,6 +1,6 @@
 {
-    "domain": "thesportsdb_sports",
-    "name": "TheSportsDB Sports",
+    "domain": "mmoui_sports",
+    "name": "MMOUi Sports",
     "codeowners": ["@mattiaouiapp"],
     "config_flow": true,
     "documentation": "https://github.com/mattiaouiapp/HomeAssistant_HACS_Sports",

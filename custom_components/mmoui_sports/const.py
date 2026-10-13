@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-DOMAIN = "thesportsdb_sports"
-NAME = "TheSportsDB Sports"
+DOMAIN = "mmoui_sports"
+NAME = "MMOUi Sports"
 ATTRIBUTION = "Data provided by TheSportsDB"
 
 CONF_API_KEY = "api_key"

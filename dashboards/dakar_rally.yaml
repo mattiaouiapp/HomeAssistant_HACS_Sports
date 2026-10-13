@@ -4,7 +4,7 @@
 # New dashboard from scratch, open it, then menu (top right) -> Edit dashboard ->
 # menu -> Raw configuration editor, and replace everything with this file.
 #
-# The Dakar entities of TheSportsDB Sports keep fixed IDs (sensor.dakar_rally_*), so
+# The Dakar entities of MMOUi Sports keep fixed IDs (sensor.dakar_rally_*), so
 # this works whatever language Home Assistant is set to.
 
 title: Dakar Rally

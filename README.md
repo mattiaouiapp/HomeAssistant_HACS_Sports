@@ -1,6 +1,6 @@
-# TheSportsDB Sports per Home Assistant
+# MMOUi Sports per Home Assistant
 
-Un'unica integrazione HACS per le competizioni che seguo con i dati di [TheSportsDB](https://www.thesportsdb.com):
+Un'unica integrazione HACS per le competizioni che seguo, con i dati di [TheSportsDB](https://www.thesportsdb.com):
 
 | Competizione | Lega TheSportsDB | Entità | Dashboard |
 | --- | --- | --- | --- |
@@ -15,13 +15,13 @@ Ogni competizione è una voce separata dell'integrazione, con il suo dispositivo
 ### HACS
 
 1. HACS → menu ⋮ → **Repository personalizzati** → aggiungi `https://github.com/mattiaouiapp/HomeAssistant_HACS_Sports`, categoria **Integrazione**.
-2. Installa **TheSportsDB Sports** e riavvia Home Assistant.
-3. **Impostazioni → Dispositivi e servizi → Aggiungi integrazione → TheSportsDB Sports**, scegli la competizione.
+2. Installa **MMOUi Sports** e riavvia Home Assistant.
+3. **Impostazioni → Dispositivi e servizi → Aggiungi integrazione → MMOUi Sports**, scegli la competizione.
 4. Ripeti il punto 3 per ogni altra competizione.
 
 ### Manuale
 
-Copia `custom_components/thesportsdb_sports` in `<config>/custom_components/` e riavvia.
+Copia `custom_components/mmoui_sports` in `<config>/custom_components/` e riavvia.
 
 ### Passaggio dalle vecchie integrazioni
 

@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "TheSportsDB Sports",
+        "title": "MMOUi Sports",
         "description": "Scegli una competizione. Calendari e risultati arrivano da TheSportsDB. La chiave gratuita `3` funziona subito; una chiave TheSportsDB Premium carica intere stagioni con una sola richiesta. Aggiungi di nuovo l'integrazione per ogni competizione.",
         "data": {
           "competition": "Competizione",
@@ -33,7 +33,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "TheSportsDB Sports",
+        "title": "MMOUi Sports",
         "data": {
           "api_key": "Chiave API TheSportsDB",
           "calendar_sessions": "Mostra prove libere e qualifiche nel calendario",

@@ -4,7 +4,7 @@
 # New dashboard from scratch, open it, then menu (top right) -> Edit dashboard ->
 # menu -> Raw configuration editor, and replace everything with this file.
 #
-# The WEC entities of TheSportsDB Sports keep fixed IDs (sensor.fia_wec_*), so
+# The WEC entities of MMOUi Sports keep fixed IDs (sensor.fia_wec_*), so
 # this works whatever language Home Assistant is set to.
 
 title: FIA WEC

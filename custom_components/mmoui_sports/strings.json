@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "TheSportsDB Sports",
+        "title": "MMOUi Sports",
         "description": "Pick a competition. Fixtures, results and calendars come from TheSportsDB. The free key `3` works out of the box; a TheSportsDB Premium key loads whole seasons with a single request. Add the integration again for each competition.",
         "data": {
           "competition": "Competition",
@@ -33,7 +33,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "TheSportsDB Sports",
+        "title": "MMOUi Sports",
         "data": {
           "api_key": "TheSportsDB API key",
           "calendar_sessions": "Show practice and qualifying sessions in the calendar",
