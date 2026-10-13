@@ -1,0 +1,12 @@
+{
+    "domain": "thesportsdb_sports",
+    "name": "TheSportsDB Sports",
+    "codeowners": ["@mattiaouiapp"],
+    "config_flow": true,
+    "documentation": "https://github.com/mattiaouiapp/HomeAssistant_HACS_Sports",
+    "integration_type": "service",
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/mattiaouiapp/HomeAssistant_HACS_Sports/issues",
+    "requirements": [],
+    "version": "1.0.0"
+}

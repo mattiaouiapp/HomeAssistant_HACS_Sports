@@ -1,0 +1,239 @@
+# SuperLega volleyball dashboard for Home Assistant.
+#
+# Uses only built-in cards. To install: Settings -> Dashboards -> Add dashboard ->
+# New dashboard from scratch, open it, then menu (top right) -> Edit dashboard ->
+# menu -> Raw configuration editor, and replace everything with this file.
+#
+# The "My team" section appears once a favourite team is set in the SuperLega entry's
+# options. Entity IDs are fixed, so this works whatever language Home Assistant is set to.
+
+title: SuperLega
+views:
+  - title: SuperLega
+    path: superlega
+    icon: mdi:volleyball
+    type: sections
+    max_columns: 3
+    sections:
+      # ------------------------------------------------------------------ Overview
+      - type: grid
+        cards:
+          - type: heading
+            heading: SuperLega
+            icon: mdi:volleyball
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.volley_superlega_season' %}
+              {% set status = states(e) %}
+              {% set banner = state_attr(e, 'banner') %}
+              {% set season = state_attr(e, 'season') %}
+              {% set nr = 'sensor.volley_superlega_next_round' %}
+              {% set leader = states('sensor.volley_superlega_standings') %}
+              {% if banner %}<img src="{{ banner }}" width="100%">{% endif %}
+
+              {% if status == 'preseason' %}
+              {% set days = state_attr(e, 'days_to_start') | int(0) %}
+              ## Season {{ season }}
+
+              Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**, on {{ as_datetime(state_attr(e, 'start')).strftime('%A %-d %B') }}:
+              {{ state_attr(e, 'teams') }} teams, {{ state_attr(e, 'total_rounds') }} rounds.
+              {% elif status == 'regular_season' %}
+              ## Round {{ states(nr) if states(nr) not in ['unknown', 'unavailable'] else '-' }} of {{ state_attr(e, 'total_rounds') }}
+
+              {{ state_attr(e, 'rounds_played') }} rounds played{% if leader not in ['unknown', 'unavailable'] %} · leader **{{ leader }}**{% endif %}{% if state_attr(e, 'matches_today') %} · **{{ state_attr(e, 'matches_today') }} match{{ 'es' if state_attr(e, 'matches_today') > 1 else '' }} today**{% endif %}.
+              {% elif status == 'playoffs' %}
+              ## Playoffs
+
+              Regular season won by **{{ leader }}**. {{ states('sensor.volley_superlega_playoffs') }} playoff matches played.
+              {% elif status == 'finished' %}
+              ## Season {{ season }} is over
+
+              Regular season won by **{{ leader }}**.
+              {% else %}
+              ## Waiting for TheSportsDB
+
+              No matches published yet.
+              {% endif %}
+          - type: tile
+            entity: sensor.volley_superlega_next_match
+            name: Next match
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.volley_superlega_last_result
+            name: Last result
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.volley_superlega_match_today
+            name: Match today
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.volley_superlega_match_live
+            name: In progress
+            grid_options:
+              columns: 6
+
+      # ------------------------------------------------------------------ My team
+      - type: grid
+        visibility:
+          # The team entities exist only when a favourite team is set.
+          - condition: state
+            entity: binary_sensor.volley_superlega_team_match_today
+            state_not: unknown
+          - condition: state
+            entity: binary_sensor.volley_superlega_team_match_today
+            state_not: unavailable
+        cards:
+          - type: heading
+            heading: My team
+            icon: mdi:heart
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set p = 'sensor.volley_superlega_team_position' %}
+              {% set n = 'sensor.volley_superlega_team_next_match' %}
+              {% set l = 'sensor.volley_superlega_team_last_match' %}
+              {% set n_side = 'home' if state_attr(n, 'home') else 'away' %}
+              {% set l_side = 'home' if state_attr(l, 'home') else 'away' %}
+              {% set badge = state_attr(p, 'badge') or state_attr(n, n_side ~ '_badge') or state_attr(l, l_side ~ '_badge') %}
+              {% set team = state_attr(p, 'team') or state_attr(n, n_side ~ '_team') or state_attr(l, l_side ~ '_team') %}
+              {% if badge %}<img src="{{ badge }}" height="48">{% endif %}
+
+              ## {{ team }}
+
+              {% if states(p) not in ['unknown', 'unavailable'] %}
+              **{{ states(p) }}°** of {{ state_attr(p, 'teams') }} · **{{ state_attr(p, 'points') }} pts** ·
+              {{ state_attr(p, 'won') }}W {{ state_attr(p, 'lost') }}L · sets {{ state_attr(p, 'sets_won') }}-{{ state_attr(p, 'sets_lost') }}
+              {%- if state_attr(p, 'points_behind_leader') %} · {{ state_attr(p, 'points_behind_leader') }} pts behind the leader{% endif %}
+              {% else %}
+              No results yet this season.
+              {% endif %}
+
+              {% if state_attr(n, 'opponent') %}
+              **Next:** {{ 'vs' if state_attr(n, 'home') else 'at' }} {{ state_attr(n, 'opponent') }},
+              {% if state_attr(n, 'start') %}{{ as_timestamp(state_attr(n, 'start')) | timestamp_custom('%A %-d %B, %H:%M') }}{% else %}{{ as_datetime(state_attr(n, 'date')).strftime('%A %-d %B') }}{% endif %}{% if state_attr(n, 'venue') %} · {{ state_attr(n, 'venue') }}{% endif %}
+              {% endif %}
+
+              {% if state_attr(l, 'opponent') %}
+              **Last:** {{ 'won' if state_attr(l, 'outcome') == 'won' else 'lost' }} **{{ states(l) }}** {{ 'vs' if state_attr(l, 'home') else 'at' }} {{ state_attr(l, 'opponent') }}
+              ({{ as_datetime(state_attr(l, 'date')).strftime('%-d %B') }}){% for s in state_attr(l, 'sets') or [] %}{{ ' · ' if loop.first else ', ' }}{{ s.home }}-{{ s.away }}{% endfor %}
+              {% endif %}
+          - type: tile
+            entity: binary_sensor.volley_superlega_team_match_today
+            name: Match today
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.volley_superlega_team_next_match
+            name: Next match
+            grid_options:
+              columns: 6
+
+      # ------------------------------------------------------------------ Next round
+      - type: grid
+        visibility:
+          - condition: state
+            entity: sensor.volley_superlega_next_round
+            state_not: unknown
+        cards:
+          - type: heading
+            heading: Next round
+            icon: mdi:calendar-arrow-right
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set a = states.sensor.volley_superlega_next_round.attributes %}
+              ### Round {{ a.round }}
+
+              | | | | |
+              |:--|--:|:-:|:--|
+              {% for m in a.matches or [] %}| {% if m.start %}{{ as_timestamp(m.start) | timestamp_custom('%a %-d/%m %H:%M') }}{% else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if m.score else ('🔴' if m.live else '-') }} | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
+              {% endfor %}
+
+      # ------------------------------------------------------------------ Last round
+      - type: grid
+        visibility:
+          - condition: state
+            entity: sensor.volley_superlega_last_round
+            state_not: unknown
+        cards:
+          - type: heading
+            heading: Last round
+            icon: mdi:calendar-check
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set a = states.sensor.volley_superlega_last_round.attributes %}
+              ### Round {{ a.round }}
+
+              | | | | |
+              |:--|--:|:-:|:--|
+              {% for m in a.matches or [] %}| {{ as_datetime(m.date).strftime('%a %-d/%m') }} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | **{{ m.score or '-' }}** | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
+              {% endfor %}
+
+              {% set sets = (a.matches or []) | selectattr('sets') | list %}
+              {% if sets %}<small>{% for m in sets %}{{ m.home_team }} - {{ m.away_team }}: {{ m.sets | join(', ') }}<br>{% endfor %}</small>{% endif %}
+
+      # ------------------------------------------------------------------ Standings
+      - type: grid
+        cards:
+          - type: heading
+            heading: Standings
+            icon: mdi:podium
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set rows = state_attr('sensor.volley_superlega_standings', 'standings') or [] %}
+              | # | Team | Pts | P | W-L | Sets | Form |
+              |--:|:--|--:|--:|:-:|:-:|:--|
+              {% for r in rows %}| {{ r.position }} | {% if r.badge %}<img src="{{ r.badge }}" height="18"> {% endif %}{{ r.team }} | **{{ r.points }}** | {{ r.played }} | {{ r.won }}-{{ r.lost }} | {{ r.sets_won }}-{{ r.sets_lost }} | {{ r.form | replace('W', '🟢') | replace('L', '🔴') }} |
+              {% endfor %}
+
+              <small>Computed from the results: 3 points for a 3-0 or 3-1 win, 2 for 3-2, 1 for 2-3. Penalties are not included.</small>
+
+      # ------------------------------------------------------------------ Playoffs
+      - type: grid
+        visibility:
+          - condition: state
+            entity: sensor.volley_superlega_season
+            state:
+              - playoffs
+              - finished
+        cards:
+          - type: heading
+            heading: Playoffs
+            icon: mdi:tournament
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set series = state_attr('sensor.volley_superlega_playoffs', 'series') or [] %}
+              {% if not series %}
+              No playoff matches on TheSportsDB yet.
+              {% endif %}
+              {% for s in series %}
+              **{{ s.team_a }} {{ s.wins_a }}-{{ s.wins_b }} {{ s.team_b }}**
+              <small>{% for m in s.matches %}{{ as_datetime(m.date).strftime('%-d/%m') }} {{ m.home_team }} {{ m.score or '-' }} {{ m.away_team }}{{ '' if loop.last else ' · ' }}{% endfor %}</small>
+
+              {% endfor %}
+
+      # ------------------------------------------------------------------ Calendar
+      - type: grid
+        cards:
+          - type: heading
+            heading: Calendar
+            icon: mdi:calendar-month
+          - type: calendar
+            grid_options:
+              columns: full
+            initial_view: listWeek
+            entities:
+              - calendar.volley_superlega_calendar

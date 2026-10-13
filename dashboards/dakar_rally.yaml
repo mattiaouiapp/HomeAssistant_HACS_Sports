@@ -1,0 +1,251 @@
+# Dakar Rally dashboard for Home Assistant.
+#
+# Uses only built-in cards. To install: Settings -> Dashboards -> Add dashboard ->
+# New dashboard from scratch, open it, then menu (top right) -> Edit dashboard ->
+# menu -> Raw configuration editor, and replace everything with this file.
+#
+# The Dakar entities of TheSportsDB Sports keep fixed IDs (sensor.dakar_rally_*), so
+# this works whatever language Home Assistant is set to.
+
+title: Dakar Rally
+views:
+  - title: Dakar Rally
+    path: dakar
+    icon: mdi:flag-checkered
+    type: sections
+    max_columns: 3
+    sections:
+      # ------------------------------------------------------------------ Overview
+      - type: grid
+        cards:
+          - type: heading
+            heading: Overview
+            icon: mdi:flag-variant
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.dakar_rally_rally_status' %}
+              {% set status = states(e) %}
+              {% set season = state_attr(e, 'season') %}
+              {% set banner = state_attr(e, 'banner') %}
+              {% set start = state_attr(e, 'start') %}
+              {% set finish = state_attr(e, 'end') %}
+              {% set total = state_attr(e, 'total_stages') %}
+              {% set done = state_attr(e, 'stages_completed') %}
+              {% if banner %}<img src="{{ banner }}" width="100%">{% endif %}
+
+              {% if status == 'upcoming' %}
+              {% set days = state_attr(e, 'days_to_start') | int(0) %}
+              ## Dakar {{ season }}
+
+              Starts in **{{ days }} day{{ '' if days == 1 else 's' }}**:
+              {{ as_datetime(start).strftime('%-d %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }},
+              a prologue and {{ total }} stages.
+              {% elif status == 'racing' %}
+              ## {{ state_attr(e, 'current_stage') }} today
+
+              Bivouac **{{ state_attr(e, 'bivouac') or 'unknown' }}** ·
+              {{ done }} of {{ total }} stages completed ·
+              finish in {{ state_attr(e, 'days_to_finish') }} days.
+              {% elif status == 'rest_day' %}
+              ## Rest day
+
+              {{ done }} of {{ total }} stages completed.
+              Racing resumes with **{{ state_attr('sensor.dakar_rally_next_stage', 'name') }}**
+              {% if state_attr('sensor.dakar_rally_next_stage', 'days_until') == 1 %}tomorrow{% else %}on {{ as_datetime(states('sensor.dakar_rally_next_stage')).strftime('%A %-d %B') }}{% endif %}.
+              {% elif status == 'finished' %}
+              ## Dakar {{ season }} is over
+
+              {{ total }} stages run, from {{ as_datetime(start).strftime('%-d %B') }} to {{ as_datetime(finish).strftime('%-d %B %Y') }}.
+              The next edition appears here as soon as TheSportsDB publishes it.
+              {% else %}
+              ## Dakar Rally
+
+              Waiting for data from TheSportsDB.
+              {% endif %}
+          - type: tile
+            entity: sensor.dakar_rally_rally_status
+            name: Status
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.dakar_rally_stages_completed
+            name: Stages completed
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: sensor.dakar_rally_rally_start
+            name: Start
+            grid_options:
+              columns: 6
+          - type: tile
+            entity: binary_sensor.dakar_rally_rally_in_progress
+            name: In progress
+            grid_options:
+              columns: 6
+
+      # ------------------------------------------------------------------ Today / next
+      - type: grid
+        cards:
+          - type: heading
+            heading: Today
+            icon: mdi:motorbike
+            visibility:
+              - condition: state
+                entity: binary_sensor.dakar_rally_stage_today
+                state: "on"
+          - type: markdown
+            visibility:
+              - condition: state
+                entity: binary_sensor.dakar_rally_stage_today
+                state: "on"
+            content: |-
+              {% set e = 'sensor.dakar_rally_current_stage' %}
+              ## {{ states(e) }}
+
+              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e, 'route') }}<br>{% endif %}
+              **Bivouac:** {{ state_attr(e, 'bivouac') or 'unknown' }}{% if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{% endif %}
+              {% if state_attr(e, 'marathon') %}
+
+              🔧 **Marathon stage:** no outside assistance at the bivouac tonight.
+              {% endif %}
+              {% if state_attr(e, 'video') %}
+
+              [▶ Stage highlights]({{ state_attr(e, 'video') }})
+              {% endif %}
+
+          - type: heading
+            heading: Next stage
+            icon: mdi:map-marker-path
+          - type: tile
+            entity: sensor.dakar_rally_next_stage
+            name: Next stage
+          - type: markdown
+            content: |-
+              {% set e = 'sensor.dakar_rally_next_stage' %}
+              {% if has_value(e) %}
+              {% set days = state_attr(e, 'days_until') | int(0) %}
+              ## {{ state_attr(e, 'name') }}
+
+              {{ as_datetime(states(e)).strftime('%A %-d %B %Y') }} ·
+              {% if days == 1 %}tomorrow{% else %}in {{ days }} days{% endif %}
+
+              {% if state_attr(e, 'route') %}**Route:** {{ state_attr(e, 'route') }}<br>{% endif %}
+              **Bivouac:** {{ state_attr(e, 'bivouac') or 'to be announced' }}{% if state_attr(e, 'country') %}, {{ state_attr(e, 'country') }}{% endif %}
+              {% if state_attr(e, 'marathon') %}
+
+              🔧 **Marathon stage:** no outside assistance at the bivouac.
+              {% endif %}
+              {% else %}
+              No upcoming stage published yet.
+              {% endif %}
+
+      # ------------------------------------------------------------------ Stages
+      - type: grid
+        cards:
+          - type: heading
+            heading: Stages
+            icon: mdi:format-list-numbered
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.dakar_rally_stages_completed' %}
+              {% set ns = namespace(rows=[]) %}
+              {% for s in state_attr(e, 'stages') or [] %}
+              {% set ns.rows = ns.rows + [s] %}
+              {% endfor %}
+              {% for d in state_attr(e, 'rest_days') or [] %}
+              {% set ns.rows = ns.rows + [{'date': d, 'rest': true}] %}
+              {% endfor %}
+              {% set today = now().date() | string %}
+              {% if ns.rows %}
+              **Dakar {{ state_attr(e, 'season') }}** · {{ states(e) }} of {{ state_attr(e, 'total_stages') }} stages completed
+
+              | | Stage | Date | Bivouac | |
+              |:-:|:--|:--|:--|:-:|
+              {% for r in ns.rows | sort(attribute='date') -%}
+              {% if r.rest -%}
+              | 😴 | {{ '**Rest day**' if r.date == today else '*Rest day*' }} | {{ as_datetime(r.date).strftime('%a %-d %b') }} | | |
+              {% else -%}
+              | {{ '❌' if r.cancelled else ('🔴' if r.today else ('✅' if r.done else '⚪')) }} | {{ '**' ~ r.name ~ '**' if r.today else r.name }} | {{ as_datetime(r.date).strftime('%a %-d %b') }} | {{ r.bivouac or '' }} | {% if r.done and r.video %}[▶]({{ r.video }}){% endif %} |
+              {% endif -%}
+              {% endfor %}
+
+              ✅ done · 🔴 today · ⚪ to come · 😴 rest day · ▶ highlights
+              {% else %}
+              No stages published yet.
+              {% endif %}
+
+      # ------------------------------------------------------------------ Last stage
+      - type: grid
+        cards:
+          - type: heading
+            heading: Last stage
+            icon: mdi:flag-checkered
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% set e = 'sensor.dakar_rally_last_stage' %}
+              {% if has_value(e) %}
+              ## {{ states(e) }} · Dakar {{ state_attr(e, 'season') }}
+
+              {{ as_datetime(state_attr(e, 'date')).strftime('%A %-d %B %Y') }}{% if state_attr(e, 'route') %} · {{ state_attr(e, 'route') }}{% elif state_attr(e, 'bivouac') %} · {{ state_attr(e, 'bivouac') }}{% endif %}
+
+              {% set results = state_attr(e, 'results') or {} %}
+              {% for category, table in results.items() %}
+              {% set label = '' if category == 'ALL' else category ~ ' · ' %}
+              {% if table.stage %}
+              ### {{ label }}Stage
+
+              | Pos | Name | Team | Time | Gap |
+              |:-:|:--|:--|--:|--:|
+              {% for r in table.stage -%}
+              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time or '' }} | {{ r.gap or '' }} |
+              {% endfor %}
+              {% endif %}
+              {% if table.general %}
+              ### {{ label }}General classification
+
+              | Pos | Name | Team | Time | Gap |
+              |:-:|:--|:--|--:|--:|
+              {% for r in table.general -%}
+              | {{ r.position }} | {{ r.name }} | {{ r.team or '' }} | {{ r.time or '' }} | {{ r.gap or '' }} |
+              {% endfor %}
+              {% endif %}
+              {% endfor %}
+              {% if state_attr(e, 'result_text') %}
+
+              {{ state_attr(e, 'result_text') }}
+              {% endif %}
+              {% if state_attr(e, 'description') %}
+
+              {{ state_attr(e, 'description') }}
+              {% endif %}
+              {% if not results and not state_attr(e, 'result_text') %}
+
+              *TheSportsDB has no results for this stage.*
+              {% endif %}
+              {% if state_attr(e, 'video') %}
+
+              [▶ Stage highlights]({{ state_attr(e, 'video') }})
+              {% endif %}
+              {% else %}
+              No stage has been run yet.
+              {% endif %}
+
+      # ------------------------------------------------------------------ Calendar
+      - type: grid
+        column_span: 3
+        cards:
+          - type: heading
+            heading: Calendar
+            icon: mdi:calendar-month
+          - type: calendar
+            grid_options:
+              columns: full
+            initial_view: listWeek
+            entities:
+              - calendar.dakar_rally_calendar

@@ -1,0 +1,177 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "TheSportsDB Sports",
+        "description": "Pick a competition. Fixtures, results and calendars come from TheSportsDB. The free key `3` works out of the box; a TheSportsDB Premium key loads whole seasons with a single request. Add the integration again for each competition.",
+        "data": {
+          "competition": "Competition",
+          "api_key": "TheSportsDB API key"
+        },
+        "data_description": {
+          "api_key": "Leave `3` for the free public key, or paste your TheSportsDB Premium key."
+        }
+      },
+      "reauth_confirm": {
+        "title": "TheSportsDB key rejected",
+        "description": "TheSportsDB no longer accepts the configured API key. Enter a new one, or `3` for the free key.",
+        "data": {
+          "api_key": "TheSportsDB API key"
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "TheSportsDB rejected this API key.",
+      "cannot_connect": "Could not reach TheSportsDB."
+    },
+    "abort": {
+      "all_configured": "Every competition is already configured.",
+      "already_configured": "This competition is already configured.",
+      "reauth_successful": "The API key was updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "TheSportsDB Sports",
+        "data": {
+          "api_key": "TheSportsDB API key",
+          "calendar_sessions": "Show practice and qualifying sessions in the calendar",
+          "calendar_rest_days": "Show rest days in the calendar",
+          "team": "Favourite team",
+          "calendar_team_only": "Only the favourite team in the calendar"
+        },
+        "data_description": {
+          "api_key": "Leave `3` for the free public key, or paste your TheSportsDB Premium key.",
+          "calendar_sessions": "When disabled, the calendar only contains the races.",
+          "calendar_rest_days": "When disabled, the calendar only contains the Prologue and the stages.",
+          "team": "Adds position, next and last match and match-day sensors for this team.",
+          "calendar_team_only": "When enabled, the calendar contains only the favourite team's matches."
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "TheSportsDB rejected this API key.",
+      "cannot_connect": "Could not reach TheSportsDB."
+    }
+  },
+  "selector": {
+    "competition": {
+      "options": {
+        "fia_wec": "FIA World Endurance Championship",
+        "dakar_rally": "Dakar Rally",
+        "superlega": "SuperLega volleyball"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_race": {
+        "name": "Next race"
+      },
+      "next_session": {
+        "name": "Next session"
+      },
+      "last_race": {
+        "name": "Last race"
+      },
+      "last_race_winner": {
+        "name": "Last race winner"
+      },
+      "races_completed": {
+        "name": "Races completed"
+      },
+      "rally_status": {
+        "name": "Rally status",
+        "state": {
+          "upcoming": "Upcoming",
+          "racing": "Racing",
+          "rest_day": "Rest day",
+          "finished": "Finished"
+        }
+      },
+      "rally_start": {
+        "name": "Rally start"
+      },
+      "next_stage": {
+        "name": "Next stage"
+      },
+      "current_stage": {
+        "name": "Current stage"
+      },
+      "last_stage": {
+        "name": "Last stage"
+      },
+      "stages_completed": {
+        "name": "Stages completed"
+      },
+      "season": {
+        "name": "Season",
+        "state": {
+          "preseason": "Preseason",
+          "regular_season": "Regular season",
+          "playoffs": "Playoffs",
+          "finished": "Finished"
+        }
+      },
+      "standings": {
+        "name": "Standings"
+      },
+      "next_round": {
+        "name": "Next round"
+      },
+      "last_round": {
+        "name": "Last round"
+      },
+      "next_match": {
+        "name": "Next match"
+      },
+      "last_result": {
+        "name": "Last result"
+      },
+      "playoffs": {
+        "name": "Playoffs"
+      },
+      "team_position": {
+        "name": "Team position"
+      },
+      "team_next_match": {
+        "name": "Team next match"
+      },
+      "team_last_match": {
+        "name": "Team last match"
+      }
+    },
+    "binary_sensor": {
+      "race_weekend": {
+        "name": "Race weekend"
+      },
+      "session_live": {
+        "name": "Session live"
+      },
+      "rally_in_progress": {
+        "name": "Rally in progress"
+      },
+      "stage_today": {
+        "name": "Stage today"
+      },
+      "match_today": {
+        "name": "Match today"
+      },
+      "match_live": {
+        "name": "Match in progress"
+      },
+      "team_match_today": {
+        "name": "Team match today"
+      },
+      "team_match_live": {
+        "name": "Team match in progress"
+      }
+    },
+    "calendar": {
+      "calendar": {
+        "name": "Calendar"
+      }
+    }
+  }
+}

@@ -1,0 +1,239 @@
+# FIA WEC dashboard for Home Assistant.
+#
+# Uses only built-in cards. To install: Settings -> Dashboards -> Add dashboard ->
+# New dashboard from scratch, open it, then menu (top right) -> Edit dashboard ->
+# menu -> Raw configuration editor, and replace everything with this file.
+#
+# The WEC entities of TheSportsDB Sports keep fixed IDs (sensor.fia_wec_*), so
+# this works whatever language Home Assistant is set to.
+
+title: FIA WEC
+views:
+- type: sections
+  title: WEC
+  path: wec
+  icon: mdi:flag-checkered
+  max_columns: 3
+  sections:
+  - type: grid
+    cards:
+    - type: heading
+      heading: Prossima gara
+      icon: mdi:flag-checkered
+    - type: markdown
+      content: '{% set e = ''sensor.fia_wec_next_race'' %}
+
+        {% if states(e) in [''unknown'', ''unavailable''] %}
+
+        Nessuna gara in programma.
+
+        {% else %}
+
+        {% set start = as_datetime(states(e)) %}
+
+        {% set left = start - now() %}
+
+        {% if state_attr(e, ''thumb'') %}<img src="{{ state_attr(e, ''thumb'') }}" width="100%">{% endif %}
+
+
+        ## {{ state_attr(e, ''name'') }}
+
+
+        📍 **{{ state_attr(e, ''circuit'') }}**, {{ state_attr(e, ''country'') }} · Round {{ state_attr(e, ''round'') }}
+
+
+        {% if state_attr(e, ''time_confirmed'') %}
+
+        🕒 {{ as_local(start).strftime(''%d/%m/%Y alle %H:%M'') }}
+
+        {% else %}
+
+        🗓️ {{ start.strftime(''%d/%m/%Y'') }} · orario da confermare
+
+        {% endif %}
+
+
+        {% if left.total_seconds() > 0 %}
+
+        ⏳ **{{ left.days }} giorni e {{ (left.seconds // 3600) }} ore** al via
+
+        {% else %}
+
+        🟢 **Gara in corso**
+
+        {% endif %}
+
+        {% endif %}'
+    - type: tile
+      entity: sensor.fia_wec_next_session
+      name: Prossima sessione
+      icon: mdi:timer-outline
+      vertical: false
+    - type: tile
+      entity: binary_sensor.fia_wec_race_weekend
+      name: Weekend di gara
+      icon: mdi:calendar-star
+    - type: tile
+      entity: binary_sensor.fia_wec_session_live
+      name: In pista ora
+      icon: mdi:car-sports
+      grid_options:
+        columns: 12
+        rows: 1
+    - type: conditional
+      conditions:
+      - condition: state
+        entity: binary_sensor.fia_wec_session_live
+        state: 'on'
+      card:
+        type: markdown
+        content: '{% set e = ''binary_sensor.fia_wec_session_live'' %}
+
+          ### 🔴 LIVE · {{ state_attr(e, ''name'') }}
+
+
+          {% if state_attr(e, ''start'') %}
+
+          Iniziata alle {{ as_local(as_datetime(state_attr(e, ''start''))).strftime(''%H:%M'') }},
+
+          fine stimata alle {{ as_local(as_datetime(state_attr(e, ''end''))).strftime(''%H:%M'') }}
+
+          {% endif %}
+
+
+          [Live timing ufficiale](https://fiawec.alkamelsystems.com)'
+    - type: markdown
+      title: Programma del weekend
+      content: '{% set e = ''sensor.fia_wec_next_race'' %}
+
+        {% set sessions = state_attr(e, ''sessions'') or [] %}
+
+        {% set days = [''lun'', ''mar'', ''mer'', ''gio'', ''ven'', ''sab'', ''dom''] %}
+
+        {% if sessions %}
+
+        | Sessione | Quando |
+
+        |:--|:--|
+
+        {%- for s in sessions %}
+
+        {%- set t = as_local(as_datetime(s.start)) if s.time_confirmed else as_datetime(s.start) %}
+
+        | {{ s.name | replace(state_attr(e, ''event_name'') ~ '' '', '''') }} | {{ days[t.weekday()] }} {{ t.strftime(''%d/%m'') }}{% if s.time_confirmed %} {{ t.strftime(''%H:%M'') }}{% else %} · da conf.{%
+        endif %} |
+
+        {%- endfor %}
+
+        {% else %}
+
+        Programma non ancora disponibile.
+
+        {% endif %}'
+  - type: grid
+    cards:
+    - type: heading
+      heading: Ultima gara
+      icon: mdi:trophy
+    - type: markdown
+      content: '{% set e = ''sensor.fia_wec_last_race'' %}
+
+        {% set results = state_attr(e, ''results'') or {} %}
+
+        {% set medals = [''🥇'', ''🥈'', ''🥉''] %}
+
+        ## {{ states(e) }}
+
+
+        {{ state_attr(e, ''circuit'') }} · {{ as_local(as_datetime(state_attr(e, ''start''))).strftime(''%d/%m/%Y'') if state_attr(e, ''start'') else '''' }}
+
+
+        {% if results %}
+
+        {% for cls, rows in results.items() %}
+
+        **{{ cls }}**
+
+
+        {% for r in rows[:3] %}
+
+        {{ medals[loop.index0] }} **#{{ r.car_number }}** {{ r.team }}{% if r.drivers %} · {{ r.drivers | join('', '') }}{% endif %}{% if r.time %} · `{{ r.time }}`{% endif %}
+
+
+        {% endfor %}
+
+        {% endfor %}
+
+        {% else %}
+
+        _Risultato non ancora pubblicato._
+
+        {% endif %}'
+    - type: markdown
+      title: Classifica piloti
+      content: '{% set standings = state_attr(''sensor.fia_wec_last_race'', ''standings'') or {} %}
+
+        {% if standings %}
+
+        {% for cls, rows in standings.items() %}
+
+        **{{ cls }}**
+
+
+        | Pos | Auto | Piloti | Punti |
+
+        |:-:|:-:|:--|--:|
+
+        {%- for r in rows[:5] %}
+
+        | {{ r.position }} | #{{ r.car_number }} | {{ r.drivers | join('', '') }} | {{ r.points | int }} |
+
+        {%- endfor %}
+
+
+        {% endfor %}
+
+        {% else %}
+
+        _Classifica non disponibile per l''ultima gara._
+
+        {% endif %}'
+    - type: markdown
+      title: Circuito della prossima gara
+      content: '{% set map = state_attr(''sensor.fia_wec_next_race'', ''track_map'') %}
+
+        {% if map %}<img src="{{ map }}" width="100%">{% else %}_Mappa non disponibile._{% endif %}'
+  - type: grid
+    cards:
+    - type: heading
+      heading: Stagione
+      icon: mdi:calendar-month
+    - type: markdown
+      content: '{% set e = ''sensor.fia_wec_races_completed'' %}
+
+        {% set done = states(e) | int(0) %}
+
+        {% set total = state_attr(e, ''total_races'') | int(0) %}
+
+        {% set pct = (100 * done / total) | round(0) if total else 0 %}
+
+        ### Stagione {{ state_attr(e, ''season'') }} · {{ done }}/{{ total }} gare
+
+
+        <ha-alert alert-type="info">{{ pct | int }}% della stagione completata</ha-alert>
+
+
+        | | Round | Gara | Data |
+
+        |:-:|:-:|:--|:--|
+
+        {%- for r in state_attr(e, ''races'') or [] %}
+
+        | {{ ''❌'' if r.cancelled else (''✅'' if r.finished else ''⏳'') }} | {{ r.round }} | {{ r.name }}{% if r.cancelled %} _({{ r.status }})_{% endif %} | {{ r.date[8:10] }}/{{ r.date[5:7] }} |
+
+        {%- endfor %}'
+    - type: calendar
+      entities:
+      - calendar.fia_wec_calendar
+      initial_view: dayGridMonth
+      title: Calendario

@@ -1,0 +1,177 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "TheSportsDB Sports",
+        "description": "Scegli una competizione. Calendari e risultati arrivano da TheSportsDB. La chiave gratuita `3` funziona subito; una chiave TheSportsDB Premium carica intere stagioni con una sola richiesta. Aggiungi di nuovo l'integrazione per ogni competizione.",
+        "data": {
+          "competition": "Competizione",
+          "api_key": "Chiave API TheSportsDB"
+        },
+        "data_description": {
+          "api_key": "Lascia `3` per la chiave pubblica gratuita, oppure incolla la tua chiave TheSportsDB Premium."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Chiave TheSportsDB rifiutata",
+        "description": "TheSportsDB non accetta più la chiave API configurata. Inseriscine una nuova, oppure `3` per la chiave gratuita.",
+        "data": {
+          "api_key": "Chiave API TheSportsDB"
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "TheSportsDB ha rifiutato questa chiave API.",
+      "cannot_connect": "Impossibile raggiungere TheSportsDB."
+    },
+    "abort": {
+      "all_configured": "Tutte le competizioni sono già configurate.",
+      "already_configured": "Questa competizione è già configurata.",
+      "reauth_successful": "La chiave API è stata aggiornata."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "TheSportsDB Sports",
+        "data": {
+          "api_key": "Chiave API TheSportsDB",
+          "calendar_sessions": "Mostra prove libere e qualifiche nel calendario",
+          "calendar_rest_days": "Mostra i giorni di riposo nel calendario",
+          "team": "Squadra preferita",
+          "calendar_team_only": "Solo la squadra preferita nel calendario"
+        },
+        "data_description": {
+          "api_key": "Lascia `3` per la chiave pubblica gratuita, oppure incolla la tua chiave TheSportsDB Premium.",
+          "calendar_sessions": "Se disattivato, il calendario contiene solo le gare.",
+          "calendar_rest_days": "Se disattivato, il calendario contiene solo il prologo e le tappe.",
+          "team": "Aggiunge posizione, prossima e ultima partita e sensori del giorno partita per questa squadra.",
+          "calendar_team_only": "Se attivato, il calendario contiene solo le partite della squadra preferita."
+        }
+      }
+    },
+    "error": {
+      "invalid_api_key": "TheSportsDB ha rifiutato questa chiave API.",
+      "cannot_connect": "Impossibile raggiungere TheSportsDB."
+    }
+  },
+  "selector": {
+    "competition": {
+      "options": {
+        "fia_wec": "FIA World Endurance Championship",
+        "dakar_rally": "Dakar Rally",
+        "superlega": "SuperLega di pallavolo"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "next_race": {
+        "name": "Prossima gara"
+      },
+      "next_session": {
+        "name": "Prossima sessione"
+      },
+      "last_race": {
+        "name": "Ultima gara"
+      },
+      "last_race_winner": {
+        "name": "Vincitore ultima gara"
+      },
+      "races_completed": {
+        "name": "Gare disputate"
+      },
+      "rally_status": {
+        "name": "Stato del rally",
+        "state": {
+          "upcoming": "In arrivo",
+          "racing": "In gara",
+          "rest_day": "Giorno di riposo",
+          "finished": "Concluso"
+        }
+      },
+      "rally_start": {
+        "name": "Partenza del rally"
+      },
+      "next_stage": {
+        "name": "Prossima tappa"
+      },
+      "current_stage": {
+        "name": "Tappa in corso"
+      },
+      "last_stage": {
+        "name": "Ultima tappa"
+      },
+      "stages_completed": {
+        "name": "Tappe completate"
+      },
+      "season": {
+        "name": "Stagione",
+        "state": {
+          "preseason": "Precampionato",
+          "regular_season": "Regular season",
+          "playoffs": "Playoff",
+          "finished": "Conclusa"
+        }
+      },
+      "standings": {
+        "name": "Classifica"
+      },
+      "next_round": {
+        "name": "Prossima giornata"
+      },
+      "last_round": {
+        "name": "Ultima giornata"
+      },
+      "next_match": {
+        "name": "Prossima partita"
+      },
+      "last_result": {
+        "name": "Ultimo risultato"
+      },
+      "playoffs": {
+        "name": "Playoff"
+      },
+      "team_position": {
+        "name": "Posizione squadra"
+      },
+      "team_next_match": {
+        "name": "Prossima partita squadra"
+      },
+      "team_last_match": {
+        "name": "Ultima partita squadra"
+      }
+    },
+    "binary_sensor": {
+      "race_weekend": {
+        "name": "Weekend di gara"
+      },
+      "session_live": {
+        "name": "Sessione in corso"
+      },
+      "rally_in_progress": {
+        "name": "Rally in corso"
+      },
+      "stage_today": {
+        "name": "Tappa oggi"
+      },
+      "match_today": {
+        "name": "Partita oggi"
+      },
+      "match_live": {
+        "name": "Partita in corso"
+      },
+      "team_match_today": {
+        "name": "Partita squadra oggi"
+      },
+      "team_match_live": {
+        "name": "Partita squadra in corso"
+      }
+    },
+    "calendar": {
+      "calendar": {
+        "name": "Calendario"
+      }
+    }
+  }
+}

@@ -1,0 +1,20 @@
+---
+name: Validate HACS
+on:
+  push:
+  pull_request:
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        name: Download repo
+        with:
+          fetch-depth: 0
+
+      - name: HACS Action
+        uses: hacs/action@main
+        with:
+          CATEGORY: integration
+          # The integration has no entry in home-assistant/brands yet.
+          IGNORE: brands
