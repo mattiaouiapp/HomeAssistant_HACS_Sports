@@ -37,8 +37,8 @@ MISSING_PAIR_RETRY = timedelta(days=1)
 # with a smaller first load so Home Assistant does not wait for the whole season.
 MAX_GAP_SEARCHES = 30
 MAX_GAP_SEARCHES_FIRST = 6
-# Matches found by name are looked up again until they have a result.
-MAX_STALE_LOOKUPS = 10
+# Finished matches without a result are looked up one by one, at most this many per update.
+MAX_STALE_LOOKUPS = 12
 STALE_LOOKBACK = timedelta(days=14)
 # Playoff teams are polled one by one, at most this often, from the end of the
 # regular season until this long after the last playoff match.
