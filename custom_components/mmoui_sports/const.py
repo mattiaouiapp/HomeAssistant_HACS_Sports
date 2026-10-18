@@ -23,8 +23,9 @@ DEFAULT_API_KEY = "3"
 
 API_BASE_URL = "https://www.thesportsdb.com/api/v1/json"
 
-# Free keys are limited to 30 requests per minute, counted over every competition.
-FREE_REQUEST_SPACING = 2.1
+# Free keys are limited to 30 requests per minute, counted over every competition;
+# TheSportsDB already answers 429 at about 28 a minute, so stay well below it.
+FREE_REQUEST_SPACING = 3.0
 PREMIUM_REQUEST_SPACING = 0.3
 
 STORAGE_VERSION = 1
