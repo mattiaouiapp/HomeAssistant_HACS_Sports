@@ -20,6 +20,8 @@ UPDATE_INTERVAL = timedelta(hours=6)
 UPDATE_INTERVAL_MATCHDAY = timedelta(minutes=10)
 # While matches missing from the free key's lists are still being looked for.
 UPDATE_INTERVAL_GAPS = timedelta(minutes=2)
+# After an update cut short by a failed request.
+UPDATE_INTERVAL_RETRY = timedelta(minutes=5)
 
 # Rounds are refreshed on every update from this long before their first match
 # until this long after their last one, the others once a day.

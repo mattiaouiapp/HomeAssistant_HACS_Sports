@@ -80,7 +80,11 @@ class WecCoordinator(DataUpdateCoordinator[WecData]):
             self._add(await self._client.async_get_next())
             self._add(await self._client.async_get_past())
         except SportsAuthError as err:
-            raise ConfigEntryAuthFailed(str(err)) from err
+            # The public keys cannot be revoked: a 403 on them is TheSportsDB throttling,
+            # and asking to re-authenticate would stop every update until confirmed.
+            if self._client.is_premium:
+                raise ConfigEntryAuthFailed(str(err)) from err
+            raise UpdateFailed(f"TheSportsDB refused the request: {err}") from err
         except SportsApiError as err:
             raise UpdateFailed(f"TheSportsDB request failed: {err}") from err
 

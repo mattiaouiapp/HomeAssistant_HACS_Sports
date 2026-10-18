@@ -30,6 +30,7 @@ from .const import (
     UPDATE_INTERVAL,
     UPDATE_INTERVAL_GAPS,
     UPDATE_INTERVAL_MATCHDAY,
+    UPDATE_INTERVAL_RETRY,
 )
 from .models import VolleyData, VolleyRound, VolleySeason
 
@@ -58,6 +59,7 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         # Events returned during the current update, the others may be stale.
         self._fresh: set[str] = set()
         self._gaps_pending = False
+        self._incomplete = False
 
     async def async_load_cache(self) -> bool:
         """Publish the stored season right away; returns False when there is none."""
@@ -117,6 +119,7 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         first_load = self.data is None
         self._fresh = set()
         self._gaps_pending = False
+        self._incomplete = False
         current = now()
         try:
             league = await self._client.async_get_league()
@@ -137,6 +140,16 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
             }
             self._add(upcoming)
             self._add(past)
+        except SportsAuthError as err:
+            # The public keys cannot be revoked: a 403 on them is TheSportsDB throttling,
+            # and asking to re-authenticate would stop every update until confirmed.
+            if self._client.is_premium:
+                raise ConfigEntryAuthFailed(str(err)) from err
+            raise UpdateFailed(f"TheSportsDB refused the request: {err}") from err
+        except SportsApiError as err:
+            raise UpdateFailed(f"TheSportsDB request failed: {err}") from err
+
+        try:
             self._add(await self._client.async_get_season(season))
             if not self._client.is_premium:
                 await self._async_walk_rounds(season, current)
@@ -145,10 +158,12 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
                 )
                 await self._async_refresh_stale(current)
                 await self._async_watch_playoffs(current)
-        except SportsAuthError as err:
-            raise ConfigEntryAuthFailed(str(err)) from err
         except SportsApiError as err:
-            raise UpdateFailed(f"TheSportsDB request failed: {err}") from err
+            # An update makes dozens of requests on the free key: keep what came back
+            # instead of throwing it away, or a single rate limited request would
+            # freeze results and standings, and try again soon.
+            _LOGGER.warning("SuperLega update incomplete, retrying soon: %s", err)
+            self._incomplete = True
 
         data = self._build()
         self._mark_settled(data.current, current)
@@ -308,7 +323,9 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
                 self._settled_rounds.add(PLAYOFF_ROUND)
 
     def _adjust_interval(self, season: VolleySeason, current: datetime) -> None:
-        if self._gaps_pending:
+        if self._incomplete:
+            self.update_interval = UPDATE_INTERVAL_RETRY
+        elif self._gaps_pending:
             self.update_interval = UPDATE_INTERVAL_GAPS
         elif season.matches_on(current.date()) or season.live(current):
             self.update_interval = UPDATE_INTERVAL_MATCHDAY
