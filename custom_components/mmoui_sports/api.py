@@ -11,7 +11,8 @@ from .const import API_BASE_URL, FREE_API_KEYS, FREE_REQUEST_SPACING, PREMIUM_RE
 _LOGGER = getLogger(__name__)
 
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
-RATE_LIMIT_RETRY_DELAY = 30
+# A 429 means the minute is used up: wait for it to roll over.
+RATE_LIMIT_RETRY_DELAY = 60
 
 
 class SportsApiError(Exception):
