@@ -77,6 +77,28 @@ views:
             grid_options:
               columns: 6
 
+      # ------------------------------------------------------------------ Live
+      - type: grid
+        visibility:
+          - condition: state
+            entity: binary_sensor.volley_superlega_match_live
+            state: "on"
+        cards:
+          - type: heading
+            heading: Live
+            icon: mdi:record-circle
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% for m in state_attr('binary_sensor.volley_superlega_match_live', 'matches') or [] %}
+              ### 🔴 {% if m.home_badge %}<img src="{{ m.home_badge }}" height="24"> {% endif %}{{ m.home_team }} **{{ m.live_score or '0-0' }}** {{ m.away_team }}{% if m.away_badge %} <img src="{{ m.away_badge }}" height="24">{% endif %}
+
+              {% if m.live_sets %}{% for s in m.live_sets %}{{ '**' ~ s ~ '**' if loop.last else s }}{{ '' if loop.last else ' · ' }}{% endfor %}{% else %}Waiting for the first point.{% endif %}
+
+              {% endfor %}
+              <small>From the Lega Volley live board, updated every minute.</small>
+
       # ------------------------------------------------------------------ My team
       - type: grid
         visibility:
@@ -112,6 +134,11 @@ views:
               {%- if state_attr(p, 'points_behind_leader') %} · {{ state_attr(p, 'points_behind_leader') }} pts behind the leader{% endif %}
               {% else %}
               No results yet this season.
+              {% endif %}
+
+              {% set lv = (state_attr('binary_sensor.volley_superlega_team_match_live', 'matches') or []) | first %}
+              {% if lv %}
+              **🔴 Live:** {{ lv.home_team }} **{{ lv.live_score or '0-0' }}** {{ lv.away_team }}{% if lv.live_sets %} · {{ lv.live_sets | join(', ') }}{% endif %}
               {% endif %}
 
               {% if state_attr(n, 'opponent') %}
@@ -153,7 +180,7 @@ views:
 
               | | | | |
               |:--|--:|:-:|:--|
-              {% for m in a.matches or [] %}| {% if m.start %}{{ as_timestamp(m.start) | timestamp_custom('%a %-d/%m %H:%M') }}{% else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if m.score else ('🔴' if m.live else '-') }} | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
+              {% for m in a.matches or [] %}| {% if m.start %}{{ as_timestamp(m.start) | timestamp_custom('%a %-d/%m %H:%M') }}{% else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %} | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if m.score else (('🔴 **' ~ m.live_score ~ '**' ~ ((' <small>' ~ m.live_sets[-1] ~ '</small>') if m.live_sets else '')) if m.live_score else ('🔴' if m.live else '-')) }} | {% if m.away_badge %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{ m.away_team }} |
               {% endfor %}
 
       # ------------------------------------------------------------------ Last round

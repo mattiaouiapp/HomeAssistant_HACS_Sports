@@ -1,8 +1,9 @@
-"""Results from the Lega Volley live board, which TheSportsDB only gets hours or days later.
+"""Results and live scores from the Lega Volley live board.
 
+TheSportsDB only gets the results hours or days later and has no live scores.
 The board (the page behind https://ww2.legavolley.it/lvc/) lists the current
-round of every league with the score and the set scores, refreshed every 30
-seconds. Only the SuperLega table is read, and its matches are paired with the
+round of every league with the sets won and the set scores, refreshed every 30
+seconds, also while the matches are being played. Only the SuperLega table is read, and its matches are paired with the
 TheSportsDB ones of the same round by team: the board names the teams after
 their sponsors, which change every season.
 """
@@ -64,6 +65,10 @@ class LvcMatch:
     def finished(self) -> bool:
         return max(self.home_score, self.away_score) == SETS_TO_WIN
 
+    @property
+    def started(self) -> bool:
+        return bool(self.sets) or self.home_score + self.away_score > 0
+
 
 def _text(html: str) -> str:
     return " ".join(unescape(_TAG.sub(" ", html)).split())
@@ -105,10 +110,10 @@ def _key(name: str) -> set[str]:
 
 
 def apply(matches: list[LvcMatch], season: VolleySeason, raw_events: dict[str, dict[str, Any]]) -> int:
-    """Write the finished board results into the TheSportsDB events; returns how many changed."""
+    """Write the board results and live scores into the TheSportsDB events; returns how many changed."""
     changed = 0
     for lvc in matches:
-        if not lvc.finished or (rnd := season.round(lvc.round)) is None:
+        if not lvc.started or (rnd := season.round(lvc.round)) is None:
             continue
         # Every team plays once per round, so one side is enough to find the match.
         home, away = _key(lvc.home), _key(lvc.away)
@@ -117,14 +122,24 @@ def apply(matches: list[LvcMatch], season: VolleySeason, raw_events: dict[str, d
             candidates = [m for m in rnd.matches if away & _key(m.away.name)]
         if len(candidates) != 1 or (event := raw_events.get(candidates[0].id)) is None:
             continue
-        result = "".join(f"{_SET_LABELS[i]}<br>{h} {a} <br>" for i, (h, a) in enumerate(lvc.sets[:5]))
-        update = {
-            "intHomeScore": str(lvc.home_score),
-            "intAwayScore": str(lvc.away_score),
-            "strResult": result,
-            "strStatus": "FT",
-        }
-        if any(event.get(k) != v for k, v in update.items()):
+        if lvc.finished:
+            result = "".join(f"{_SET_LABELS[i]}<br>{h} {a} <br>" for i, (h, a) in enumerate(lvc.sets[:5]))
+            update = {
+                "intHomeScore": str(lvc.home_score),
+                "intAwayScore": str(lvc.away_score),
+                "strResult": result,
+                "strStatus": "FT",
+            }
+            stale = ("strLiveScore", "strLiveSets")
+        else:
+            # Sets won so far, and every set score including the one being played.
+            update = {
+                "strLiveScore": f"{lvc.home_score}-{lvc.away_score}",
+                "strLiveSets": [f"{h}-{a}" for h, a in lvc.sets],
+            }
+            stale = ()
+        if any(event.get(k) != v for k, v in update.items()) or any(k in event for k in stale):
+            event = {k: v for k, v in event.items() if k not in stale}
             raw_events[candidates[0].id] = {**event, **update}
             changed += 1
     return changed

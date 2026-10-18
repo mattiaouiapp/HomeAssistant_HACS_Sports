@@ -2182,6 +2182,26 @@ views:
       - type: grid
         visibility:
           - condition: state
+            entity: binary_sensor.volley_superlega_match_live
+            state: "on"
+        cards:
+          - type: heading
+            heading: Live
+            icon: mdi:record-circle
+          - type: markdown
+            grid_options:
+              columns: full
+            content: |-
+              {% for m in state_attr('binary_sensor.volley_superlega_match_live', 'matches') or [] %}
+              ### 🔴 {% if m.home_badge %}<img src="{{ m.home_badge }}" height="24"> {% endif %}{{ m.home_team }} **{{ m.live_score or '0-0' }}** {{ m.away_team }}{% if m.away_badge %} <img src="{{ m.away_badge }}" height="24">{% endif %}
+
+              {% if m.live_sets %}{% for s in m.live_sets %}{{ '**' ~ s ~ '**' if loop.last else s }}{{ '' if loop.last else ' · ' }}{% endfor %}{% else %}Waiting for the first point.{% endif %}
+
+              {% endfor %}
+              <small>From the Lega Volley live board, updated every minute.</small>
+      - type: grid
+        visibility:
+          - condition: state
             entity: sensor.volley_superlega_next_round
             state_not: unknown
         cards:
@@ -2206,7 +2226,9 @@ views:
               else %}{{ as_datetime(m.date).strftime('%a %-d/%m') }}{% endif %}
               | {{ m.home_team }} {% if m.home_badge %}<img src="{{ m.home_badge
               }}" height="18">{% endif %} | {{ ('**' ~ m.score ~ '**') if
-              m.score else ('🔴' if m.live else '-') }} | {% if m.away_badge
+              m.score else (('🔴 **' ~ m.live_score ~ '**' ~ ((' <small>' ~
+              m.live_sets[-1] ~ '</small>') if m.live_sets else '')) if
+              m.live_score else ('🔴' if m.live else '-')) }} | {% if m.away_badge
               %}<img src="{{ m.away_badge }}" height="18">{% endif %} {{
               m.away_team }} |
 

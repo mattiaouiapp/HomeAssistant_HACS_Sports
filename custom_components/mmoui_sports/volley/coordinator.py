@@ -32,6 +32,7 @@ from .const import (
     STORAGE_VERSION,
     UPDATE_INTERVAL,
     UPDATE_INTERVAL_GAPS,
+    UPDATE_INTERVAL_LIVE,
     UPDATE_INTERVAL_MATCHDAY,
     UPDATE_INTERVAL_RESULTS,
     UPDATE_INTERVAL_RETRY,
@@ -69,6 +70,8 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         self._playoffs_watched: datetime | None = None
         self._gaps_pending = False
         self._incomplete = False
+        # The last update that went to TheSportsDB, the others only read the live board.
+        self._last_full: datetime | None = None
 
     async def async_load_cache(self) -> bool:
         """Publish the stored season right away; returns False when there is none."""
@@ -129,10 +132,15 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         return f"{year}-{year + 1}" if now().month >= 7 else f"{year - 1}-{year}"
 
     async def _async_update_data(self) -> VolleyData:
+        current = now()
+        if self._live_only(current):
+            await self._async_board_results()
+            return await self._async_finish(current)
+
         first_load = self.data is None
         self._gaps_pending = False
         self._incomplete = False
-        current = now()
+        self._last_full = current
         try:
             league = await self._client.async_get_league()
             upcoming = await self._client.async_get_next()
@@ -177,7 +185,15 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
             _LOGGER.warning("SuperLega update incomplete, retrying soon: %s", err)
             self._incomplete = True
         await self._async_board_results()
+        return await self._async_finish(current)
 
+    def _live_only(self, current: datetime) -> bool:
+        """While a match is being played, TheSportsDB is only asked every UPDATE_INTERVAL_MATCHDAY."""
+        if self.data is None or self._last_full is None or current - self._last_full >= UPDATE_INTERVAL_MATCHDAY:
+            return False
+        return bool(self._build().current.live(current))
+
+    async def _async_finish(self, current: datetime) -> VolleyData:
         data = self._build()
         self._mark_settled(data.current, current)
         await self._store.async_save(
@@ -361,11 +377,13 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         )
 
     def _adjust_interval(self, season: VolleySeason, current: datetime) -> None:
-        if self._incomplete:
+        if season.live(current):
+            self.update_interval = UPDATE_INTERVAL_LIVE
+        elif self._incomplete:
             self.update_interval = UPDATE_INTERVAL_RETRY
         elif self._gaps_pending:
             self.update_interval = UPDATE_INTERVAL_GAPS
-        elif season.matches_on(current.date()) or season.live(current):
+        elif season.matches_on(current.date()):
             self.update_interval = UPDATE_INTERVAL_MATCHDAY
         elif self._results_pending(season, current):
             self.update_interval = UPDATE_INTERVAL_RESULTS

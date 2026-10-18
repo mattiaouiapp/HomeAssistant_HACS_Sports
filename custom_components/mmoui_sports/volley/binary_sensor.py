@@ -62,7 +62,7 @@ class VolleyMatchTodaySensor(VolleyMatchSensor):
 
 
 class VolleyMatchLiveSensor(VolleyMatchSensor):
-    """On from the start time until the result is in (at most the length of a match)."""
+    """On from the start time until the result is in; `matches` carries the live scores."""
 
     _attr_device_class = BinarySensorDeviceClass.RUNNING
 
