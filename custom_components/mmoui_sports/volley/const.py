@@ -22,6 +22,9 @@ UPDATE_INTERVAL_MATCHDAY = timedelta(minutes=10)
 UPDATE_INTERVAL_GAPS = timedelta(minutes=2)
 # After an update cut short by a failed request.
 UPDATE_INTERVAL_RETRY = timedelta(minutes=5)
+# After a match day, until every finished match has its result: TheSportsDB
+# often publishes them hours or days late.
+UPDATE_INTERVAL_RESULTS = timedelta(minutes=30)
 
 # Rounds are refreshed on every update from this long before their first match
 # until this long after their last one, the others once a day.
