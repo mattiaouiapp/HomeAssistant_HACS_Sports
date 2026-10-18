@@ -30,6 +30,7 @@ from .const import (
     UPDATE_INTERVAL,
     UPDATE_INTERVAL_GAPS,
     UPDATE_INTERVAL_MATCHDAY,
+    UPDATE_INTERVAL_RESULTS,
     UPDATE_INTERVAL_RETRY,
 )
 from .models import VolleyData, VolleyRound, VolleySeason
@@ -330,6 +331,14 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
             if today - season.playoffs[-1].day > ROUND_FORCE_SETTLED_AFTER:
                 self._settled_rounds.add(PLAYOFF_ROUND)
 
+    @staticmethod
+    def _results_pending(season: VolleySeason, current: datetime) -> bool:
+        """Finished matches still waiting for TheSportsDB to publish their score."""
+        return any(
+            m.is_done(current) and not m.has_result and m.day >= current.date() - STALE_LOOKBACK
+            for m in season.active
+        )
+
     def _adjust_interval(self, season: VolleySeason, current: datetime) -> None:
         if self._incomplete:
             self.update_interval = UPDATE_INTERVAL_RETRY
@@ -337,5 +346,7 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
             self.update_interval = UPDATE_INTERVAL_GAPS
         elif season.matches_on(current.date()) or season.live(current):
             self.update_interval = UPDATE_INTERVAL_MATCHDAY
+        elif self._results_pending(season, current):
+            self.update_interval = UPDATE_INTERVAL_RESULTS
         else:
             self.update_interval = UPDATE_INTERVAL
