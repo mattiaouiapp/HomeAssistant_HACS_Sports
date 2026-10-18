@@ -7,6 +7,7 @@ from typing import Any
 from .const import (
     CANCELLED_STATUSES,
     FINISHED_STATUSES,
+    LIVE_MAX_DURATION,
     MATCH_DURATION,
     OUTCOME_LOST,
     OUTCOME_WON,
@@ -88,6 +89,9 @@ class VolleyMatch:
     venue: str | None
     video: str | None
     thumb: str | None
+    # From the Lega Volley live board while the match is being played.
+    live_score: str | None = None
+    live_sets: list[str] = field(default_factory=list)
 
     @classmethod
     def from_api(cls, raw: dict[str, Any], tz: tzinfo) -> VolleyMatch | None:
@@ -112,6 +116,8 @@ class VolleyMatch:
             venue=_clean(raw.get("strVenue")),
             video=_clean(raw.get("strVideo")),
             thumb=_clean(raw.get("strThumb")),
+            live_score=_clean(raw.get("strLiveScore")),
+            live_sets=[str(s) for s in raw.get("strLiveSets") or []],
         )
 
     @property
@@ -162,17 +168,18 @@ class VolleyMatch:
         return OUTCOME_WON if sets[0] > sets[1] else OUTCOME_LOST
 
     def is_live(self, now: datetime) -> bool:
-        """Started, not over yet and no result: TheSportsDB has no live scores for volleyball."""
+        """Started and no result yet: a long match stays live while the board has its score."""
         if self.has_result or self.is_cancelled or self.start is None:
             return False
-        return self.start <= now < self.end
+        end = self.start + LIVE_MAX_DURATION if self.live_score else self.end
+        return self.start <= now < end
 
     def is_done(self, now: datetime) -> bool:
         """The result is in, or the match is over even if TheSportsDB has no score yet."""
         if self.has_result:
             return True
         if self.start is not None:
-            return now >= self.end
+            return now >= self.end and not self.is_live(now)
         return self.day < now.date()
 
     @property
@@ -212,7 +219,10 @@ class VolleyMatch:
             "thumb": self.thumb,
         }
         if now is not None:
-            attrs["live"] = self.is_live(now)
+            live = self.is_live(now)
+            attrs["live"] = live
+            attrs["live_score"] = self.live_score if live else None
+            attrs["live_sets"] = self.live_sets if live else []
         return attrs
 
     def summary(self, now: datetime) -> dict[str, Any]:
@@ -231,6 +241,8 @@ class VolleyMatch:
             "venue": self.venue,
             "cancelled": self.is_cancelled,
             "live": self.is_live(now),
+            "live_score": self.live_score if self.is_live(now) else None,
+            "live_sets": self.live_sets if self.is_live(now) else [],
             "done": self.is_done(now),
         }
 

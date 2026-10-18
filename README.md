@@ -82,7 +82,7 @@ Da **Configura** su ogni voce:
 
 ### SuperLega
 
-Calendario, squadre e stemmi vengono da TheSportsDB. I risultati e i parziali dei set della giornata in corso vengono dal [tabellone live di Lega Volley](https://ww2.legavolley.it/lvc/), aggiornato ogni 30 secondi: TheSportsDB li riceve con ore o giorni di ritardo. Il tabellone chiama le squadre con il nome dello sponsor, quindi le partite vengono abbinate per giornata e città. Viene letta solo la tabella della SuperLega.
+Calendario, squadre e stemmi vengono da TheSportsDB. I risultati, i parziali dei set e i **punteggi in diretta** della giornata in corso vengono dal [tabellone live di Lega Volley](https://ww2.legavolley.it/lvc/), aggiornato ogni 30 secondi: TheSportsDB riceve i risultati con ore o giorni di ritardo e non ha il live. Mentre si gioca, l'integrazione legge solo il tabellone, ogni minuto, e interroga TheSportsDB ogni 10 minuti. Il tabellone chiama le squadre con il nome dello sponsor, quindi le partite vengono abbinate per giornata e città. Viene letta solo la tabella della SuperLega.
 
 | Entità | Tipo | Contenuto |
 | --- | --- | --- |
@@ -94,7 +94,7 @@ Calendario, squadre e stemmi vengono da TheSportsDB. I risultati e i parziali de
 | `sensor.volley_superlega_last_result` | testo | Ultimo risultato, es. `Volley Perugia 3-1 Volley Lube` |
 | `sensor.volley_superlega_playoffs` | numero | Partite di playoff giocate. Attributo `series`: le serie con vittorie e partite |
 | `binary_sensor.volley_superlega_match_today` | on/off | Nei giorni di partita |
-| `binary_sensor.volley_superlega_match_live` | in corso | Dall'inizio della partita all'arrivo del risultato (al massimo 2h30) |
+| `binary_sensor.volley_superlega_match_live` | in corso | Dall'inizio della partita all'arrivo del risultato. Attributo `matches`: le partite in corso con `live_score` (set vinti, es. `2-1`) e `live_sets` (punteggio di ogni set, l'ultimo è quello in corso) |
 | `calendar.volley_superlega_calendar` | calendario | Tutte le partite, con il punteggio nel titolo una volta giocate |
 | `sensor.volley_superlega_team_position` | numero | Posizione della squadra preferita, vuota prima dei primi risultati |
 | `sensor.volley_superlega_team_next_match` | timestamp | Prossima partita: avversaria, casa o trasferta, palazzetto |

@@ -18,6 +18,8 @@ MAX_ROUNDS = 40
 
 UPDATE_INTERVAL = timedelta(hours=6)
 UPDATE_INTERVAL_MATCHDAY = timedelta(minutes=10)
+# While a match is being played, only the live board is read, this often.
+UPDATE_INTERVAL_LIVE = timedelta(minutes=1)
 # While matches missing from the free key's lists are still being looked for.
 UPDATE_INTERVAL_GAPS = timedelta(minutes=2)
 # After an update cut short by a failed request.
@@ -50,6 +52,8 @@ PLAYOFF_WATCH_AFTER = timedelta(days=10)
 
 # A match without a result is considered in progress for this long after its start.
 MATCH_DURATION = timedelta(hours=2, minutes=30)
+# A match the live board still shows as being played stays live up to this long.
+LIVE_MAX_DURATION = timedelta(hours=4)
 # Calendar entries use this length.
 CALENDAR_MATCH_LENGTH = timedelta(hours=2)
 
