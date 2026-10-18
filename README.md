@@ -6,7 +6,7 @@ Un'unica integrazione HACS per le competizioni che seguo, con i dati di [TheSpor
 | --- | --- | --- | --- |
 | **FIA World Endurance Championship** | TheSportsDB, lega [4413](https://www.thesportsdb.com/league/4413) | `*.fia_wec_*` | [`dashboards/fia_wec.yaml`](dashboards/fia_wec.yaml) |
 | **Dakar Rally** | TheSportsDB, lega [4447](https://www.thesportsdb.com/league/4447) | `*.dakar_rally_*` | [`dashboards/dakar_rally.yaml`](dashboards/dakar_rally.yaml) |
-| **SuperLega** (pallavolo maschile) | TheSportsDB, lega [4544](https://www.thesportsdb.com/league/4544) | `*.volley_superlega_*` | [`dashboards/superlega.yaml`](dashboards/superlega.yaml) |
+| **SuperLega** (pallavolo maschile) | TheSportsDB, lega [4544](https://www.thesportsdb.com/league/4544), risultati dal [tabellone live di Lega Volley](https://ww2.legavolley.it/lvc/) | `*.volley_superlega_*` | [`dashboards/superlega.yaml`](dashboards/superlega.yaml) |
 | **NBA** (basket) | ESPN, nessuna chiave | `*.nba_*` | [`dashboards/nba.yaml`](dashboards/nba.yaml) |
 
 Ogni competizione è una voce separata dell'integrazione, con il suo dispositivo e le sue opzioni. Gli ID delle entità sono fissi e non dipendono dalla lingua di Home Assistant, quindi le dashboard funzionano ovunque. I nomi sono tradotti in italiano e inglese.
@@ -81,6 +81,8 @@ Da **Configura** su ogni voce:
 | `calendar.dakar_rally_calendar` | calendario | Prologo, tappe e (se attivo) giorni di riposo |
 
 ### SuperLega
+
+Calendario, squadre e stemmi vengono da TheSportsDB. I risultati e i parziali dei set della giornata in corso vengono dal [tabellone live di Lega Volley](https://ww2.legavolley.it/lvc/), aggiornato ogni 30 secondi: TheSportsDB li riceve con ore o giorni di ritardo. Il tabellone chiama le squadre con il nome dello sponsor, quindi le partite vengono abbinate per giornata e città. Viene letta solo la tabella della SuperLega.
 
 | Entità | Tipo | Contenuto |
 | --- | --- | --- |
