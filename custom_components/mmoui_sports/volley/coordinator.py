@@ -1,10 +1,13 @@
 from __future__ import annotations
+import asyncio
 from datetime import date, datetime
 from logging import getLogger
 from typing import Any
+import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
@@ -33,9 +36,12 @@ from .const import (
     UPDATE_INTERVAL_RESULTS,
     UPDATE_INTERVAL_RETRY,
 )
+from . import lvc
 from .models import VolleyData, VolleyRound, VolleySeason
 
 _LOGGER = getLogger(__name__)
+
+LVC_TIMEOUT = aiohttp.ClientTimeout(total=20)
 
 
 def _has_score(event: dict[str, Any]) -> bool:
@@ -170,6 +176,7 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
             # freeze results and standings, and try again soon.
             _LOGGER.warning("SuperLega update incomplete, retrying soon: %s", err)
             self._incomplete = True
+        await self._async_board_results()
 
         data = self._build()
         self._mark_settled(data.current, current)
@@ -186,6 +193,20 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         )
         self._adjust_interval(data.current, current)
         return data
+
+    async def _async_board_results(self) -> None:
+        """Lega Volley's live board has the results of the current round long before TheSportsDB."""
+        season = self._build().current
+        if not season.rounds:
+            return
+        try:
+            async with async_get_clientsession(self.hass).get(lvc.LVC_URL, timeout=LVC_TIMEOUT) as resp:
+                resp.raise_for_status()
+                html = (await resp.read()).decode("utf-8", "replace")
+        except (aiohttp.ClientError, asyncio.TimeoutError) as err:
+            _LOGGER.debug("Lega Volley live board unavailable: %s", err)
+            return
+        lvc.apply(lvc.parse(html, season.total_rounds // 2), season, self._raw_events)
 
     @staticmethod
     def _is_hot(rnd: VolleyRound, today: date) -> bool:
