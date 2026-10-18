@@ -37,6 +37,10 @@ from .models import VolleyData, VolleyRound, VolleySeason
 _LOGGER = getLogger(__name__)
 
 
+def _has_score(event: dict[str, Any]) -> bool:
+    return event.get("intHomeScore") not in (None, "") and event.get("intAwayScore") not in (None, "")
+
+
 def now() -> datetime:
     """Match days are calendar days, so work with the local time."""
     return dt_util.now()
@@ -56,8 +60,6 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
         self._round_fetched: dict[int, datetime] = {}
         self._missing_pairs: dict[str, datetime] = {}
         self._playoffs_watched: datetime | None = None
-        # Events returned during the current update, the others may be stale.
-        self._fresh: set[str] = set()
         self._gaps_pending = False
         self._incomplete = False
 
@@ -92,8 +94,12 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
     def _add(self, events: list[dict[str, Any]]) -> None:
         for event in events:
             event_id = str(event["idEvent"])
+            known = self._raw_events.get(event_id)
+            # The free key's lists come from a cache that lags behind the match pages:
+            # an older copy without the score must not replace one that has it.
+            if known is not None and _has_score(known) and not _has_score(event):
+                continue
             self._raw_events[event_id] = event
-            self._fresh.add(event_id)
 
     def _raw_team_names(self) -> dict[str, str]:
         """TheSportsDB's own team names, needed to search a match by name."""
@@ -117,7 +123,6 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
 
     async def _async_update_data(self) -> VolleyData:
         first_load = self.data is None
-        self._fresh = set()
         self._gaps_pending = False
         self._incomplete = False
         current = now()
@@ -276,13 +281,16 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
                     self._missing_pairs[key] = current
 
     async def _async_refresh_stale(self, current: datetime) -> None:
-        """Matches found by name are not in the round lists: look them up until they have a result."""
+        """Look finished matches up one by one until they have a result.
+
+        The round lists lag behind, sometimes by days, and the matches found by
+        name are not in them at all: the match page has the score first.
+        """
         season = self._build().current
         stale = [
             m
             for m in season.active
-            if m.id not in self._fresh
-            and not m.has_result
+            if not m.has_result
             and m.is_done(current)
             and m.day >= current.date() - STALE_LOOKBACK
         ]
