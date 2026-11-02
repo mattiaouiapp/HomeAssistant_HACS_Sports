@@ -11,7 +11,7 @@ Un'unica integrazione HACS per le competizioni che seguo, con i dati di [TheSpor
 
 Ogni competizione è una voce separata dell'integrazione, con il suo dispositivo e le sue opzioni. Gli ID delle entità sono fissi e non dipendono dalla lingua di Home Assistant, quindi le dashboard funzionano ovunque. I nomi sono tradotti in italiano e inglese.
 
-Nel repository c'è anche la mia dashboard completa, [`dashboards/sport.yaml`](dashboards/sport.yaml): oltre alle tre competizioni contiene F1 e calcio (Serie A e Champions League), che arrivano da altre integrazioni. Vedi [Dashboard completa](#dashboard-completa).
+Nel repository c'è anche la mia dashboard completa, [`dashboards/Full_Sport.yaml`](dashboards/Full_Sport.yaml): oltre alle quattro competizioni contiene F1 e calcio (Serie A e Champions League), che arrivano da altre integrazioni. Vedi [Dashboard completa](#dashboard-completa).
 
 ## Installazione
 
@@ -128,13 +128,13 @@ Le giornate NBA seguono la data americana (ora di New York), come le conta la NB
 | File | Contenuto | Richiede |
 | --- | --- | --- |
 | [`fia_wec.yaml`](dashboards/fia_wec.yaml), [`dakar_rally.yaml`](dashboards/dakar_rally.yaml), [`superlega.yaml`](dashboards/superlega.yaml), [`nba.yaml`](dashboards/nba.yaml) | Una competizione per dashboard | Solo questa integrazione, card native |
-| [`sport.yaml`](dashboards/sport.yaml) | La mia dashboard completa: F1, WEC, Dakar, Serie A con Champions League, SuperLega, NBA | Anche [Calcio Live](https://github.com/Bobsilvio/calcio-live) con le sue card (Serie A, Champions League e il Milan), un'integrazione F1 con entità `sensor.f1_*` e [button-card](https://github.com/custom-cards/button-card) |
+| [`Full_Sport.yaml`](dashboards/Full_Sport.yaml) | La mia dashboard completa: F1, WEC, Dakar, Serie A con Champions League, SuperLega, NBA | Anche [Calcio Live](https://github.com/Bobsilvio/calcio-live) con le sue card (Serie A, Champions League e il Milan), un'integrazione F1 con entità `sensor.f1_*` e [button-card](https://github.com/custom-cards/button-card) |
 
 Per aggiungerne una: **Impostazioni → Plance → Aggiungi plancia → Nuova plancia da zero**, aprila, menu ⋮ → **Modifica plancia** → menu ⋮ → **Editor di configurazione grezza**, e sostituisci il contenuto con il file.
 
 ### Dashboard completa
 
-[`sport.yaml`](dashboards/sport.yaml) ha sei viste:
+[`Full_Sport.yaml`](dashboards/Full_Sport.yaml) ha sei viste:
 
 | Vista | Dati da | Entità principali |
 | --- | --- | --- |
