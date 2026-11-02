@@ -17,7 +17,9 @@ Nel repository c'è anche la mia dashboard completa, [`dashboards/sport.yaml`](d
 
 ### HACS
 
-1. HACS → menu ⋮ → **Repository personalizzati** → aggiungi `https://github.com/mattiaouiapp/HomeAssistant_HACS_Sports`, categoria **Integrazione**.
+[![Apri il repository in HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mattiaouiapp&repository=HomeAssistant_HACS_Sports&category=integration)
+
+1. Premi il pulsante qui sopra, oppure HACS → menu ⋮ → **Repository personalizzati** → aggiungi `https://github.com/mattiaouiapp/HomeAssistant_HACS_Sports`, categoria **Integrazione**.
 2. Installa **MMOUi Sports** e riavvia Home Assistant.
 3. **Impostazioni → Dispositivi e servizi → Aggiungi integrazione → MMOUi Sports**, scegli la competizione.
 4. Ripeti il punto 3 per ogni altra competizione.
