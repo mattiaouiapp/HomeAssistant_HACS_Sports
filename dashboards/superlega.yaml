@@ -148,7 +148,7 @@ views:
 
               {% if state_attr(l, 'opponent') %}
               **Last:** {{ 'won' if state_attr(l, 'outcome') == 'won' else 'lost' }} **{{ states(l) }}** {{ 'vs' if state_attr(l, 'home') else 'at' }} {{ state_attr(l, 'opponent') }}
-              ({{ as_datetime(state_attr(l, 'date')).strftime('%-d %B') }}){% for s in state_attr(l, 'sets') or [] %}{{ ' · ' if loop.first else ', ' }}{{ s.home }}-{{ s.away }}{% endfor %}
+              ({{ as_datetime(state_attr(l, 'date')).strftime('%-d %B') }}){% for s in state_attr(l, 'set_scores') or [] %}{{ ' · ' if loop.first else ', ' }}{{ s }}{% endfor %}
               {% endif %}
           - type: tile
             entity: binary_sensor.volley_superlega_team_match_today
