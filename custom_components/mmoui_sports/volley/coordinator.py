@@ -38,7 +38,7 @@ from .const import (
     UPDATE_INTERVAL_RETRY,
 )
 from . import lvc
-from .models import VolleyData, VolleyRound, VolleySeason
+from .models import VolleyData, VolleyRound, VolleySeason, parse_sets
 
 _LOGGER = getLogger(__name__)
 
@@ -109,6 +109,12 @@ class VolleyCoordinator(DataUpdateCoordinator[VolleyData]):
             # an older copy without the score must not replace one that has it.
             if known is not None and _has_score(known) and not _has_score(event):
                 continue
+            # TheSportsDB never fills in the fourth set: keep the set scores of the
+            # live board when they are more complete than the new copy's.
+            if known is not None and len(parse_sets(known.get("strResult"))) > len(
+                parse_sets(event.get("strResult"))
+            ):
+                event = {**event, "strResult": known["strResult"]}
             self._raw_events[event_id] = event
 
     def _raw_team_names(self) -> dict[str, str]:

@@ -182,6 +182,12 @@ class VolleyMatch:
             return now >= self.end and not self.is_live(now)
         return self.day < now.date()
 
+    def set_scores(self) -> list[str]:
+        """Every set played as "home-away", with "?" for the ones TheSportsDB left out (often the fourth)."""
+        known = {s["set"]: f"{s['home']}-{s['away']}" for s in self.sets}
+        played = self.home_score + self.away_score if self.has_result else max(known, default=0)
+        return [known.get(n, "?") for n in range(1, max(played, max(known, default=0)) + 1)]
+
     @property
     def score(self) -> str | None:
         return f"{self.home_score}-{self.away_score}" if self.has_result else None
@@ -210,6 +216,7 @@ class VolleyMatch:
             "away_score": self.away_score if self.has_result else None,
             "score": self.score,
             "sets": self.sets,
+            "set_scores": self.set_scores(),
             "winner": self.winner.name if self.winner else None,
             "title": self.title,
             "status": self.status,
@@ -237,7 +244,7 @@ class VolleyMatch:
             "away_team": self.away.name,
             "away_badge": self.away.badge,
             "score": self.score,
-            "sets": [f"{s['home']}-{s['away']}" for s in self.sets],
+            "sets": self.set_scores(),
             "venue": self.venue,
             "cancelled": self.is_cancelled,
             "live": self.is_live(now),
