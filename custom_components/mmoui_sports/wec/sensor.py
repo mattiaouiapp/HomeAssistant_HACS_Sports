@@ -8,8 +8,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .coordinator import WecCoordinator
-from .entity import WecClockEntity
+from .coordinator import WecClassificationCoordinator, WecCoordinator
+from .entity import WecClockEntity, WecEntity
 from .models import WecData, WecEvent, parse_result
 
 
@@ -173,7 +173,13 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: WecCoordinator = entry.runtime_data
-    async_add_entities(WecSensor(coordinator, description) for description in SENSORS)
+    await coordinator.classification.async_refresh()
+    async_add_entities(
+        [
+            *(WecSensor(coordinator, description) for description in SENSORS),
+            WecClassificationSensor(coordinator.classification),
+        ]
+    )
 
 
 class WecSensor(WecClockEntity, SensorEntity):
@@ -190,3 +196,31 @@ class WecSensor(WecClockEntity, SensorEntity):
     @property
     def extra_state_attributes(self) -> dict[str, Any] | None:
         return self.entity_description.attrs_fn(self.coordinator.data, self.now())
+
+
+class WecClassificationSensor(WecEntity, SensorEntity):
+    """The hour of the race the published classification refers to."""
+
+    _attr_icon = "mdi:format-list-numbered"
+    _unrecorded_attributes = frozenset({"classes"})
+
+    def __init__(self, coordinator: WecClassificationCoordinator) -> None:
+        super().__init__(coordinator, Platform.SENSOR, "race_classification")
+
+    @property
+    def native_value(self) -> int:
+        return self.coordinator.data["hour"]
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        data = self.coordinator.data
+        rows = [row for cls in data["classes"].values() for row in cls]
+        leader = min(rows, key=lambda row: row["overall"], default=None)
+        return {
+            "event": data["event"],
+            "final": data["final"],
+            "cars": len(rows),
+            "leader": leader["number"] if leader else None,
+            "leader_laps": leader["laps"] if leader else None,
+            "classes": data["classes"],
+        }

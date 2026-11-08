@@ -161,13 +161,13 @@ Le viste hanno un'intestazione e sono visibili solo al mio utente (`visible: use
 
 Vale solo per WEC, Dakar e SuperLega: l'NBA usa l'API pubblica di ESPN, che non richiede chiavi.
 
-TheSportsDB offre una chiave pubblica gratuita (`3`), già impostata come predefinita. Restituisce al massimo 5 eventi per richiesta, quindi l'integrazione ricostruisce le stagioni a pezzi:
+TheSportsDB offre una chiave pubblica gratuita (`123`), già impostata come predefinita. Restituisce al massimo 5 eventi per richiesta, quindi l'integrazione ricostruisce le stagioni a pezzi:
 
-- **WEC**: percorre i round uno per uno e, nei weekend con molte sessioni, giorno per giorno;
+- **WEC**: percorre i round uno per uno e, se manca la gara, cerca giorno per giorno;
 - **Dakar**: percorre le tappe una per una;
 - **SuperLega**: percorre le giornate (6 partite, ne arrivano 5), ricava quali squadre mancano in ogni giornata e cerca la loro partita per nome; durante i playoff segue la prossima e l'ultima partita di ogni squadra.
 
-Il limite di 30 richieste al minuto vale per tutte le competizioni insieme e l'integrazione lo rispetta con una coda comune. Il primo caricamento richiede da uno a due minuti per competizione; poi i dati vengono salvati e si aggiorna solo ciò che non è ancora concluso. Ai riavvii successivi le entità sono subito disponibili e l'aggiornamento avviene in background.
+Il limite, circa 10 richieste al minuto, vale per tutte le competizioni insieme e l'integrazione lo rispetta con una coda comune. Il primo caricamento richiede qualche minuto per competizione; poi i dati vengono salvati e si aggiorna solo ciò che non è ancora concluso. Ai riavvii successivi le entità sono subito disponibili e l'aggiornamento avviene in background.
 
 Con una chiave [TheSportsDB Premium](https://www.thesportsdb.com/pricing) ogni stagione arriva con una sola richiesta. La chiave si cambia da **Configura**.
 
