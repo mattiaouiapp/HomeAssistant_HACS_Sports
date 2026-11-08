@@ -5,21 +5,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from .coordinator import WecClassificationCoordinator, WecCoordinator
-from .entity import WecClockEntity, WecEntity
+from .coordinator import WecCoordinator
+from .entity import WecClockEntity
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
     coordinator: WecCoordinator = entry.runtime_data
-    async_add_entities(
-        [
-            WecRaceWeekendSensor(coordinator),
-            WecSessionLiveSensor(coordinator),
-            WecLmp2Sensor(coordinator.classification),
-        ]
-    )
+    async_add_entities([WecRaceWeekendSensor(coordinator), WecSessionLiveSensor(coordinator)])
 
 
 class WecRaceWeekendSensor(WecClockEntity, BinarySensorEntity):
@@ -63,16 +57,3 @@ class WecSessionLiveSensor(WecClockEntity, BinarySensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         session = self.coordinator.data.live_session(self.now())
         return session.as_attributes() if session else None
-
-
-class WecLmp2Sensor(WecEntity, BinarySensorEntity):
-    """On when the latest race has an LMP2 class, which only runs at Le Mans."""
-
-    _attr_icon = "mdi:car-sports"
-
-    def __init__(self, coordinator: WecClassificationCoordinator) -> None:
-        super().__init__(coordinator, Platform.BINARY_SENSOR, "lmp2_in_race")
-
-    @property
-    def is_on(self) -> bool:
-        return "LMP2" in self.coordinator.data["classes"]

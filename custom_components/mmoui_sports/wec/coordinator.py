@@ -5,12 +5,10 @@ from typing import Any
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 from ..api import SportsApiClient, SportsApiError, SportsAuthError
-from .alkamel import AlKamelClient, RaceFile
 from .const import (
     DOMAIN,
     EXTRA_ROUNDS,
@@ -29,12 +27,6 @@ _LOGGER = getLogger(__name__)
 DAYS_AFTER_LAST_SESSION = 2
 MAX_DAY_LOOKUPS = 6
 
-# The hourly classifications appear a few minutes after each hour of the race.
-CLASSIFICATION_INTERVAL = timedelta(hours=6)
-CLASSIFICATION_INTERVAL_RACE = timedelta(minutes=5)
-# Keep polling this long after the race for the final classification.
-CLASSIFICATION_FINAL_WAIT = timedelta(days=1)
-
 
 class WecCoordinator(DataUpdateCoordinator[WecData]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry, client: SportsApiClient) -> None:
@@ -46,7 +38,6 @@ class WecCoordinator(DataUpdateCoordinator[WecData]):
         self._league: dict[str, Any] = {}
         self._raw_events: dict[str, dict[str, Any]] = {}
         self._settled_rounds: set[int] = set()
-        self.classification = WecClassificationCoordinator(hass, entry, self)
 
     async def async_load_cache(self) -> bool:
         """Publish the stored calendar right away; returns False when there is none."""
@@ -168,47 +159,3 @@ class WecCoordinator(DataUpdateCoordinator[WecData]):
             # Keep polling until the result shows up.
             weekend = not last.result and now - last.end < ROUND_SETTLED_AFTER
         self.update_interval = UPDATE_INTERVAL_WEEKEND if weekend else UPDATE_INTERVAL
-
-
-class WecClassificationCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Follows the official classification of the latest race."""
-
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, wec: WecCoordinator) -> None:
-        super().__init__(
-            hass, _LOGGER, name=f"{DOMAIN}_classification", update_interval=CLASSIFICATION_INTERVAL
-        )
-        self.config_entry = entry
-        self._wec = wec
-        self._client = AlKamelClient(async_get_clientsession(hass))
-        self._file: RaceFile | None = None
-
-    async def _async_update_data(self) -> dict[str, Any]:
-        self._adjust_interval()
-        try:
-            race_file = await self._client.async_latest_race_file()
-            if race_file is None:
-                raise UpdateFailed("Al Kamel lists no WEC race classification")
-            if race_file == self._file and self.data is not None:
-                return self.data
-            classes = await self._client.async_get_classification(race_file)
-        except SportsApiError as err:
-            raise UpdateFailed(f"Al Kamel request failed: {err}") from err
-        self._file = race_file
-        return {
-            "event": race_file.event,
-            "race_start": race_file.start,
-            "hour": race_file.hour,
-            "final": race_file.final,
-            "classes": classes,
-        }
-
-    def _adjust_interval(self) -> None:
-        data = self._wec.data
-        now = dt_util.utcnow()
-        racing = False
-        if data is not None:
-            last = data.last_race(now)
-            racing = data.current_round(now) is not None or (
-                last is not None and now - last.end < CLASSIFICATION_FINAL_WAIT
-            )
-        self.update_interval = CLASSIFICATION_INTERVAL_RACE if racing else CLASSIFICATION_INTERVAL

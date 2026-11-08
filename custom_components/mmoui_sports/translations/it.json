@@ -175,9 +175,6 @@
       },
       "nba_team_standing": {
         "name": "Posizione squadra"
-      },
-      "race_classification": {
-        "name": "Classifica di gara"
       }
     },
     "binary_sensor": {
@@ -213,9 +210,6 @@
       },
       "nba_team_game_live": {
         "name": "Partita squadra in corso"
-      },
-      "lmp2_in_race": {
-        "name": "LMP2 in gara"
       }
     },
     "calendar": {

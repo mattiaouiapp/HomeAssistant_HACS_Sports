@@ -175,9 +175,6 @@
       },
       "nba_team_standing": {
         "name": "Team standing"
-      },
-      "race_classification": {
-        "name": "Race classification"
       }
     },
     "binary_sensor": {
@@ -213,9 +210,6 @@
       },
       "nba_team_game_live": {
         "name": "Team game in progress"
-      },
-      "lmp2_in_race": {
-        "name": "LMP2 in race"
       }
     },
     "calendar": {
