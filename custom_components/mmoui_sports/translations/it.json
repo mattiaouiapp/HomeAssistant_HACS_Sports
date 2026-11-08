@@ -3,18 +3,18 @@
     "step": {
       "user": {
         "title": "MMOUi Sports",
-        "description": "Scegli una competizione. WEC, Dakar e SuperLega arrivano da TheSportsDB: la chiave gratuita `123` funziona subito, una chiave TheSportsDB Premium carica intere stagioni con una sola richiesta. L'NBA arriva da ESPN e non serve nessuna chiave (il campo viene ignorato). Aggiungi di nuovo l'integrazione per ogni competizione.",
+        "description": "Scegli una competizione. WEC, Dakar e SuperLega arrivano da TheSportsDB: la chiave gratuita `3` funziona subito, una chiave TheSportsDB Premium carica intere stagioni con una sola richiesta. L'NBA arriva da ESPN e non serve nessuna chiave (il campo viene ignorato). Aggiungi di nuovo l'integrazione per ogni competizione.",
         "data": {
           "competition": "Competizione",
           "api_key": "Chiave API TheSportsDB"
         },
         "data_description": {
-          "api_key": "Lascia `123` per la chiave pubblica gratuita, oppure incolla la tua chiave TheSportsDB Premium. Non usata per l'NBA."
+          "api_key": "Lascia `3` per la chiave pubblica gratuita, oppure incolla la tua chiave TheSportsDB Premium. Non usata per l'NBA."
         }
       },
       "reauth_confirm": {
         "title": "Chiave TheSportsDB rifiutata",
-        "description": "TheSportsDB non accetta più la chiave API configurata. Inseriscine una nuova, oppure `123` per la chiave gratuita.",
+        "description": "TheSportsDB non accetta più la chiave API configurata. Inseriscine una nuova, oppure `3` per la chiave gratuita.",
         "data": {
           "api_key": "Chiave API TheSportsDB"
         }
@@ -42,7 +42,7 @@
           "calendar_team_only": "Solo la squadra preferita nel calendario"
         },
         "data_description": {
-          "api_key": "Lascia `123` per la chiave pubblica gratuita, oppure incolla la tua chiave TheSportsDB Premium.",
+          "api_key": "Lascia `3` per la chiave pubblica gratuita, oppure incolla la tua chiave TheSportsDB Premium.",
           "calendar_sessions": "Se disattivato, il calendario contiene solo le gare.",
           "calendar_rest_days": "Se disattivato, il calendario contiene solo il prologo e le tappe.",
           "team": "Aggiunge posizione, prossima e ultima partita e sensori del giorno partita per questa squadra.",

@@ -23,6 +23,8 @@ from .models import WecData, WecEvent, WecRound
 
 _LOGGER = getLogger(__name__)
 
+# The free key returns at most this many events per round.
+FREE_ROUND_CAP = 5
 # Day lookups needed to find the race (and capped sessions) after the last known session.
 DAYS_AFTER_LAST_SESSION = 2
 MAX_DAY_LOOKUPS = 6
@@ -100,7 +102,7 @@ class WecCoordinator(DataUpdateCoordinator[WecData]):
         return data
 
     async def _async_fill_free_rounds(self, season: str) -> None:
-        """Work around the free key caps: walk every round, looking up race days only if the race is missing."""
+        """Work around the free key caps: walk every round, then look up race days."""
         known = self._build()
         highest_known = max((r.number for r in known.rounds if r.number < 100), default=0)
         for number in range(1, MAX_ROUNDS + 1):
@@ -120,7 +122,7 @@ class WecCoordinator(DataUpdateCoordinator[WecData]):
             return
         self._add(events)
         round_ = self._round(number)
-        if round_ is not None and round_.race is None:
+        if round_ is not None and (len(events) >= FREE_ROUND_CAP or round_.race is None):
             for day in self._days_to_check(round_):
                 self._add(await self._client.async_get_day(day))
 

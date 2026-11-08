@@ -6,20 +6,13 @@ from logging import getLogger
 from time import monotonic
 from typing import Any
 import aiohttp
-from .const import (
-    API_BASE_URL,
-    DEFAULT_API_KEY,
-    FREE_API_KEYS,
-    FREE_REQUEST_SPACING,
-    PREMIUM_REQUEST_SPACING,
-    RETIRED_API_KEY,
-)
+from .const import API_BASE_URL, FREE_API_KEYS, FREE_REQUEST_SPACING, PREMIUM_REQUEST_SPACING
 
 _LOGGER = getLogger(__name__)
 
 REQUEST_TIMEOUT = aiohttp.ClientTimeout(total=30)
-# A 429 usually says how long to wait (120 s on the free key); this is for when it doesn't.
-RATE_LIMIT_RETRY_DELAY = 120
+# A 429 means the minute is used up: wait for it to roll over.
+RATE_LIMIT_RETRY_DELAY = 60
 
 
 class SportsApiError(Exception):
@@ -41,17 +34,10 @@ class _Throttle:
 _THROTTLE = _Throttle()
 
 
-def _retry_delay(retry_after: str | None) -> int:
-    try:
-        return int(retry_after) if retry_after else RATE_LIMIT_RETRY_DELAY
-    except ValueError:
-        return RATE_LIMIT_RETRY_DELAY
-
-
 class SportsApiClient:
     def __init__(self, session: aiohttp.ClientSession, api_key: str, league_id: str) -> None:
         self._session = session
-        self._api_key = DEFAULT_API_KEY if api_key == RETIRED_API_KEY else api_key
+        self._api_key = api_key
         self._league_id = league_id
 
     @property
@@ -71,9 +57,8 @@ class SportsApiClient:
                 try:
                     async with self._session.get(url, params=params, timeout=REQUEST_TIMEOUT) as resp:
                         if resp.status == 429 and attempt == 1:
-                            delay = _retry_delay(resp.headers.get("Retry-After"))
-                            _LOGGER.debug("TheSportsDB rate limit hit, retrying in %ss", delay)
-                            await asyncio.sleep(delay)
+                            _LOGGER.debug("TheSportsDB rate limit hit, retrying in %ss", RATE_LIMIT_RETRY_DELAY)
+                            await asyncio.sleep(RATE_LIMIT_RETRY_DELAY)
                             continue
                         if resp.status in (401, 403):
                             raise SportsAuthError(f"API key rejected ({resp.status})")
